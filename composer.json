@@ -1,0 +1,41 @@
+{
+	"name": "bulton-fr/bfw-template",
+	"type": "library",
+	"description": "Module de Template pour BFW",
+	"keywords": ["template", "module", "bfw"],
+	"homepage": "https://github.com/bulton-fr/bfw-template",
+	"time": "2014-02-07",
+	"license": "LGPL-3.0",
+	"authors":
+	[
+		{
+			"name": "Vermeulen Maxime / Bulton",
+			"homepage": "http://www.bulton.fr",
+			"email": "bulton.fr@bulton.fr"
+		}
+	],
+	"support":
+	{
+		"email": "support@bulton.fr",
+		"issues": "https://github.com/bulton-fr/bfw-template/issues",
+		"source": "https://github.com/bulton-fr/bfw-template"
+	},
+	"require":
+	{
+		"php": ">=5.3.0"
+		"bulton-fr/bfw": ">=2.0.1"
+	},
+	"require-dev":
+	{
+		"atoum/atoum": "@stable"
+	},
+	"minimum-stability": "stable",
+	"autoload":
+	{
+		"psr-4":
+		{
+			"BFWTpl\\": "src/classes/",
+			"BFWTplInterface\\": "src/interfaces/"
+		}
+	}
+}
