@@ -1,7 +1,16 @@
 <?php
+/**
+ * Interfaces en rapport avec le système de template
+ * @author Vermeulen Maxime <bulton.fr@gmail.com>
+ * @version 1.0
+ */
 
 namespace BFWTplInterface;
 
+/**
+ * Interface de la classe template
+ * @package bfw-template
+ */
 interface ITemplate
 {
     const REGEX = '([0-9a-zA-Z._-]+)'; //La regex pour la recherche dans les blocks et variables
@@ -10,13 +19,16 @@ interface ITemplate
     
     /**
      * Accesseur get vers l'attribut $Block
+     * 
+     * @return array
      */
     public function getBlock();
     
     /**
      * Construteur
-     * @param string : Le lien vers le fichier tpl
-     * @param array [opt] : Des variables n'étant pas dans un block à passer (nom => valeur)
+     * 
+     * @param string     $file Le lien vers le fichier tpl
+     * @param array|null $vars (default: null) Des variables n'étant pas dans un block à passer (nom => valeur)
      */
     public function __construct($file, $vars=null);
     
@@ -29,18 +41,18 @@ interface ITemplate
     
     /**
      * Permet d'ajouter une variable à une liste qui sera lu partout, qu'on soit dans un block ou non
-     * @param array : Les variables à ajouter (nom => valeur)
-     * @return bool [opt] : Uniquement si une erreur survient. Ne retourne rien si tout se passe bien.
+     * 
+     * @param array $vars Les variables à ajouter (nom => valeur)
      */
     public function AddGeneralVars($vars);
     
     /**
      * Ajoute des variables à un block ou non
-     * @param array : Les variables à ajouter (nom => valeur)
-     * @param bool/string [opt] : Indique si c'est pour un block (le block courant est utilisé)
-     *                            Il est aussi possible de donner le nom du block, cependant il est préférable de
-     *                            le faire sur des block qui sont des conditions et non des blocks boucle.
-     * @return bool [opt] : Uniquement si une erreur survient. Ne retourne rien si tout se passe bien.
+     * 
+     * @param array       $vars Les variables à ajouter (nom => valeur)
+     * @param bool|string $name (default: false) Indique si c'est pour un block (le block courant est utilisé)
+     * Il est aussi possible de donner le nom du block, cependant il est préférable de
+     * le faire sur des block qui sont des conditions et non des blocks boucle.
      */
     public function AddVars($vars, $name=false);
     
@@ -51,28 +63,31 @@ interface ITemplate
     
     /**
      * Ajoute un sous block au système et appelle méthode EndBlock() à la fin
-     * @param string : Le nom du block
-     * @param array/int [opt] : Les variables du block à passer (nom => valeur). Si int voir 3eme paramètre
-     * @param int [opt] : Indique de combien de block on doit remonter
-     * @return bool : Retourne true si tout c'est bien passé, False si le nom du block n'est pas autorisé.
+     * 
+     * @param string    $name      Le nom du block
+     * @param array|int $varsOrEnd (default: null) Les variables du block à passer (nom => valeur). Si int voir 3eme paramètre
+     * @param int       $end       (default: null) Indique de combien de block on doit remonter
      */
     public function AddBlockWithEnd($name, $varsOrEnd = null, $end=null);
     
     /**
      * Ajoute un sous block au système
-     * @param string : Le nom du block
-     * @param array [opt] : Les variables du block à passer (nom => valeur)
-     * @param int [opt] : Indique de combien de block on doit remonter
-     * @return bool : Retourne true si tout c'est bien passé, False si le nom du block n'est pas autorisé.
+     * 
+     * @param string $name Le nom du block
+     * @param array  $vars (default: null) Les variables du block à passer (nom => valeur)
+     * @param int    $end  (default: null) Indique de combien de block on doit remonter
+     * 
+     * @return bool Retourne true si tout c'est bien passé, False si le nom du block n'est pas autorisé.
      */
     public function AddBlock($name, $vars = null, $end=null);
     
     /**
      * Indique la fin du fichier template.
      * Une fois appelé, le script parse le fichier template.
-     * @param bool $no_echo [opt] : Indique s'il faut afficher le résultat par echo (défault)
-     *                               ou le renvoyer en sortie de fonction
-     * @return string : Si $no_echo = 1 Alors ça retourne le résultat du parsage
+     * 
+     * @param bool $no_echo (default: false) Indique s'il faut afficher le résultat par echo (défault) ou le renvoyer en sortie de fonction
+     * 
+     * @return string Retourne le résultat du parsage si $no_echo=1
      */
     public function End($no_echo=0);
 }

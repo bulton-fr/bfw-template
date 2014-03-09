@@ -1,7 +1,7 @@
 <?php
 /**
  * Classes en rapport avec le système de template
- * @author Vermeulen Maxime
+ * @author Vermeulen Maxime <bulton.fr@gmail.com>
  * @version 1.0
  */
 
@@ -9,42 +9,47 @@ namespace BFWTpl;
 
 /**
  * Système de template
- * @package BFW
+ * @package bfw-template
  */
-class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
+class Template implements \BFWTplInterface\ITemplate
 {
     /**
-     * @var $FileLink : Le lien du fichier
+     * @var $_kernel L'instance du Kernel
+     */
+    private $_kernel;
+    
+    /**
+     * @var $FileLink Le lien du fichier
      */
     private $FileLink = '';
     
     /**
-     * @var $TamponFinal : Tampon contenant le résultat final
+     * @var $TamponFinal Tampon contenant le résultat final
      */
     private $TamponFinal = '';
     
     /**
-     * @var $Block : Infos sur les blocks
+     * @var $Block Infos sur les blocks
      */
     private $Block = array();
     
     /**
-     * @var $Root_Variable : Les variables n'étant pas dans un block
+     * @var $Root_Variable Les variables n'étant pas dans un block
      */
     private $Root_Variable = array();
     
     /**
-     * @var $Gen_Variable : Les variables générales
+     * @var $Gen_Variable Les variables générales
      */
     private $Gen_Variable = array();
     
     /**
-     * @var $CurrentBlock : L'adresse du block en cours
+     * @var $CurrentBlock L'adresse du block en cours
      */
     public $CurrentBlock = '/';
     
     /**
-     * @var $BanWords : Les mots interdits
+     * @var $BanWords Les mots interdits
      */
     private $BanWords = array('block', 'vars');
     
@@ -91,6 +96,8 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
     
     /**
      * Accesseur get vers l'attribut $Block
+     * 
+     * @return array
      */
     public function getBlock()
     {
@@ -99,11 +106,13 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
     
     /**
      * Construteur
-     * @param string : Le lien vers le fichier tpl
-     * @param array [opt] : Des variables n'étant pas dans un block à passer (nom => valeur)
+     * 
+     * @param string     $file Le lien vers le fichier tpl
+     * @param array|null $vars (default: null) Des variables n'étant pas dans un block à passer (nom => valeur)
      */
     public function __construct($file, $vars=null)
     {
+        $this->_kernel = getKernel();
         $this->FileLink = path_view.$file;
         
         if($vars != null) //Si on a mis des variables en paramètre, on les envoi à AddVars();
@@ -124,8 +133,8 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
     
     /**
      * Permet d'ajouter une variable à une liste qui sera lu partout, qu'on soit dans un block ou non
-     * @param array : Les variables à ajouter (nom => valeur)
-     * @return bool [opt] : Uniquement si une erreur survient. Ne retourne rien si tout se passe bien.
+     * 
+     * @param array $vars Les variables à ajouter (nom => valeur)
      */
     public function AddGeneralVars($vars)
     {
@@ -140,11 +149,11 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
     
     /**
      * Ajoute des variables à un block ou non
-     * @param array : Les variables à ajouter (nom => valeur)
-     * @param bool/string [opt] : Indique si c'est pour un block (le block courant est utilisé)
-     *                            Il est aussi possible de donner le nom du block, cependant il est préférable de
-     *                            le faire sur des block qui sont des conditions et non des blocks boucle.
-     * @return bool [opt] : Uniquement si une erreur survient. Ne retourne rien si tout se passe bien.
+     * 
+     * @param array       $vars Les variables à ajouter (nom => valeur)
+     * @param bool|string $name (default: false) Indique si c'est pour un block (le block courant est utilisé)
+     * Il est aussi possible de donner le nom du block, cependant il est préférable de
+     * le faire sur des block qui sont des conditions et non des blocks boucle.
      */
     public function AddVars($vars, $name=false)
     {
@@ -268,10 +277,10 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
     
     /**
      * Ajoute un sous block au système et appelle méthode EndBlock() à la fin
-     * @param string : Le nom du block
-     * @param array/int [opt] : Les variables du block à passer (nom => valeur). Si int voir 3eme paramètre
-     * @param int [opt] : Indique de combien de block on doit remonter
-     * @return bool : Retourne true si tout c'est bien passé, False si le nom du block n'est pas autorisé.
+     * 
+     * @param string    $name      Le nom du block
+     * @param array|int $varsOrEnd (default: null) Les variables du block à passer (nom => valeur). Si int voir 3eme paramètre
+     * @param int       $end       (default: null) Indique de combien de block on doit remonter
      */
     public function AddBlockWithEnd($name, $varsOrEnd = null, $end=null)
     {
@@ -304,10 +313,12 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
     
     /**
      * Ajoute un sous block au système
-     * @param string : Le nom du block
-     * @param array [opt] : Les variables du block à passer (nom => valeur)
-     * @param int [opt] : Indique de combien de block on doit remonter
-     * @return bool : Retourne true si tout c'est bien passé, False si le nom du block n'est pas autorisé.
+     * 
+     * @param string $name Le nom du block
+     * @param array  $vars (default: null) Les variables du block à passer (nom => valeur)
+     * @param int    $end  (default: null) Indique de combien de block on doit remonter
+     * 
+     * @return bool Retourne true si tout c'est bien passé, False si le nom du block n'est pas autorisé.
      */
     public function AddBlock($name, $vars = null, $end=null)
     {
@@ -407,9 +418,10 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
     /**
      * Indique la fin du fichier template.
      * Une fois appelé, le script parse le fichier template.
-     * @param bool $no_echo [opt] : Indique s'il faut afficher le résultat par echo (défault)
-     *                               ou le renvoyer en sortie de fonction
-     * @return string : Si $no_echo = 1 Alors ça retourne le résultat du parsage
+     * 
+     * @param bool $no_echo (default: false) Indique s'il faut afficher le résultat par echo (défault) ou le renvoyer en sortie de fonction
+     * 
+     * @return string Retourne le résultat du parsage si $no_echo=1
      */
     public function End($no_echo=0)
     {
@@ -419,6 +431,7 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
         if($no_echo == 0) //On affiche le résultat via un simple echo.
         {
             echo $this->TamponFinal;
+            return '';
         }
         else
         {
@@ -451,11 +464,12 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
     /**
      * Analise une ligne (d'un fichier) afin d'y trouvé les blocks ouvrant/fermant 
      * et stock en variable le contenu si on est dans un block
-     * @param [REF] string : La ligne à lire
-     * @param [REF] string : La variable tampon pour le stockage de la ligne lorsqu'un block est rencontré
-     * @param [REF] string : Le nom du block trouvé
-     * @param [REF] int : Le nombre de block ouvert
-     * @param [REF] string : Le chemin actuel dans l'arborescence des blocks
+     * 
+     * @param string $line          La ligne à lire
+     * @param string $TamponBlock   (ref) La variable tampon pour le stockage de la ligne lorsqu'un block est rencontré
+     * @param string $nameBlockFind (ref) Le nom du block trouvé
+     * @param int    $nbOpenBlock   (ref) Le nombre de block ouvert
+     * @param string $nameBlockRoot Le chemin actuel dans l'arborescence des blocks
      */
     private function analize($line, &$TamponBlock, &$nameBlockFind, &$nbOpenBlock, $nameBlockRoot)
     {
@@ -510,9 +524,10 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
     
     /**
      * Traite le contenu des blocks pour l'envoyer à l'analise
-     * @param string : Le chemin actuel dans l'arborescence des blocks
-     * @param string : Le nom du block trouvé
-     * @param string : Le contenu du block
+     * 
+     * @param string $nameBlockRoot Le chemin actuel dans l'arborescence des blocks
+     * @param string $nameBlockFind Le nom du block trouvé
+     * @param string $contBlock     Le contenu du block
      */
     private function traitementBlock($nameBlockRoot, $nameBlockFind, $contBlock)
     {
@@ -582,9 +597,11 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
     
     /**
      * Permet de remplacer la balise <var /> par sa valeur
-     * @param string : La ligne sur laquel on doit agir
-     * @param string/bool : Le chemin dans l'arborescence où on se trouve
-     * @returb string : La nouvelle ligne avec les balise var remplacé.
+     * 
+     * @param string      $line      La ligne sur laquel on doit agir
+     * @param string|bool $nameBlock Le chemin dans l'arborescence où on se trouve
+     * 
+     * @return string La nouvelle ligne avec les balise var remplacé.
      */
     private function remplaceVars($line, $nameBlock)
     {
@@ -729,8 +746,10 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
     
     /**
      * Permet de savoir si un block est présent dans la ligne et si oui, son nom.
-     * @param string : La ligne où l'on doit chercher
-     * @return null/string : Le nom du block s'il y en a un de présent. Sinon renvoi null
+     * 
+     * @param string $line La ligne où l'on doit chercher
+     * 
+     * @return null|string Le nom du block s'il y en a un de présent. Sinon renvoi null
      */
     private function recherche_NameBlock($line)
     {
@@ -749,9 +768,11 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
     
     /**
      * Permet de savoir s'il y a une balise block ouvrante dans la ligne et met à jour le nombre de block trouvé
-     * @param string : la ligne dans laquelle on doit chercher
-     * @param [REF] int : Le nombre de block ouvert trouvé
-     * @return bool : True si une balise block ouvrante est trouvé. False sinon
+     * 
+     * @param string $line   La ligne dans laquelle on doit chercher
+     * @param int    $nbOpen (ref) Le nombre de block ouvert trouvé
+     * 
+     * @return bool True si une balise block ouvrante est trouvé. False sinon
      */
     private function chercheOpenBlock($line, &$nbOpen)
     {
@@ -771,9 +792,11 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
     /**
      * Permet de savoir si on est sur la dernière balise block fermante dans la ligne
      * Et met à jour le nombre de block trouvé pour chaque balise block fermante trouvée.
-     * @param string : la ligne dans laquelle on doit chercher
-     * @param [REF] int : Le nombre de block ouvert trouvé
-     * @return bool : True si la dernière balise block fermante est trouvé. False sinon
+     * 
+     * @param string $line   La ligne dans laquelle on doit chercher
+     * @param int    $nbOpen (ref) Le nombre de block ouvert trouvé
+     * 
+     * @return bool True si la dernière balise block fermante est trouvé. False sinon
      */
     private function chercheFinBlock($line, &$nbOpen)
     {
@@ -799,8 +822,10 @@ class Template extends \BFW\Kernel implements \BFWTplInterface\ITemplate
     
     /**
      * Recherche et remplace les block <view> par leurs équivalents
-     * @param string : la ligne dans laquelle on doit chercher
-     * @return string : Le résultat après traitement de la vue
+     * 
+     * @param string $line la ligne dans laquelle on doit chercher
+     * 
+     * @return string Le résultat après traitement de la vue
      */
     private function remplace_view($line)
     {
