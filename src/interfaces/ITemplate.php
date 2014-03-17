@@ -25,14 +25,6 @@ interface ITemplate
     public function getBlock();
     
     /**
-     * Construteur
-     * 
-     * @param string     $file Le lien vers le fichier tpl
-     * @param array|null $vars (default: null) Des variables n'étant pas dans un block à passer (nom => valeur)
-     */
-    public function __construct($file, $vars=null);
-    
-    /**
      * A indiquer à la fin de l'utilisation du 1er block.
      * Permet de revenir au chemin racine dans l'arborescence pour les blocks suivant,
      * de façon à ce qu'il ne soit pas mis comme un sous-block du dernier block ouvert

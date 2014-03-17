@@ -16,32 +16,32 @@ class Template implements \BFWTplInterface\ITemplate
     /**
      * @var $_kernel L'instance du Kernel
      */
-    private $_kernel;
+    protected $_kernel;
     
     /**
      * @var $FileLink Le lien du fichier
      */
-    private $FileLink = '';
+    protected $FileLink = '';
     
     /**
      * @var $TamponFinal Tampon contenant le résultat final
      */
-    private $TamponFinal = '';
+    protected $TamponFinal = '';
     
     /**
      * @var $Block Infos sur les blocks
      */
-    private $Block = array();
+    protected $Block = array();
     
     /**
      * @var $Root_Variable Les variables n'étant pas dans un block
      */
-    private $Root_Variable = array();
+    protected $Root_Variable = array();
     
     /**
      * @var $Gen_Variable Les variables générales
      */
-    private $Gen_Variable = array();
+    protected $Gen_Variable = array();
     
     /**
      * @var $CurrentBlock L'adresse du block en cours
@@ -51,7 +51,7 @@ class Template implements \BFWTplInterface\ITemplate
     /**
      * @var $BanWords Les mots interdits
      */
-    private $BanWords = array('block', 'vars');
+    protected $BanWords = array('block', 'vars');
     
     /*********************************************
      * Note sur le déplacement dans les blocks : *
@@ -442,7 +442,7 @@ class Template implements \BFWTplInterface\ITemplate
     /**
      * Lit le fichier template contenant l'html et le traite
      */
-    private function readFile()
+    protected function readFile()
     {
         //** Utilisé lorsque la lecture rencontre un block
             //Le contenu du fichier html est mit de dedans lorsqu'un 1er block est rencontrer jusqu'à sa fermeture
@@ -471,7 +471,7 @@ class Template implements \BFWTplInterface\ITemplate
      * @param int    $nbOpenBlock   (ref) Le nombre de block ouvert
      * @param string $nameBlockRoot Le chemin actuel dans l'arborescence des blocks
      */
-    private function analize($line, &$TamponBlock, &$nameBlockFind, &$nbOpenBlock, $nameBlockRoot)
+    protected function analize($line, &$TamponBlock, &$nameBlockFind, &$nbOpenBlock, $nameBlockRoot)
     {
         //Si une balise block ouvrante a été trouvé
         if($this->chercheOpenBlock($line, $nbOpenBlock) && $nbOpenBlock == 1)
@@ -529,7 +529,7 @@ class Template implements \BFWTplInterface\ITemplate
      * @param string $nameBlockFind Le nom du block trouvé
      * @param string $contBlock     Le contenu du block
      */
-    private function traitementBlock($nameBlockRoot, $nameBlockFind, $contBlock)
+    protected function traitementBlock($nameBlockRoot, $nameBlockFind, $contBlock)
     {
         $nameBlockRootTMP = $nameBlockRoot; //On garde le contenu de côté
         $tamponBlock = ''; //Le tampon qui servira si un sous block est rencontré
@@ -603,7 +603,7 @@ class Template implements \BFWTplInterface\ITemplate
      * 
      * @return string La nouvelle ligne avec les balise var remplacé.
      */
-    private function remplaceVars($line, $nameBlock)
+    protected function remplaceVars($line, $nameBlock)
     {
         //On cherche la position de la 1ere balise <var afin de savoir s'il y en a dans la ligne.
         $posDouble = strpos($line, '<var name="');
@@ -751,7 +751,7 @@ class Template implements \BFWTplInterface\ITemplate
      * 
      * @return null|string Le nom du block s'il y en a un de présent. Sinon renvoi null
      */
-    private function recherche_NameBlock($line)
+    protected function recherche_NameBlock($line)
     {
         $pos = strpos($line, '<block name="'); //On recherche s'il y a une balise block ouvrante
         
@@ -774,7 +774,7 @@ class Template implements \BFWTplInterface\ITemplate
      * 
      * @return bool True si une balise block ouvrante est trouvé. False sinon
      */
-    private function chercheOpenBlock($line, &$nbOpen)
+    protected function chercheOpenBlock($line, &$nbOpen)
     {
         $pos = strpos($line, '<block name="'); //On recherche s'il y a une balise block ouvrante
         
@@ -798,7 +798,7 @@ class Template implements \BFWTplInterface\ITemplate
      * 
      * @return bool True si la dernière balise block fermante est trouvé. False sinon
      */
-    private function chercheFinBlock($line, &$nbOpen)
+    protected function chercheFinBlock($line, &$nbOpen)
     {
         $pos = strpos($line, '</block>'); //On recherche s'il y a une balise block fermante
             
@@ -827,7 +827,7 @@ class Template implements \BFWTplInterface\ITemplate
      * 
      * @return string Le résultat après traitement de la vue
      */
-    private function remplace_view($line)
+    protected function remplace_view($line)
     {
         //Recherche
         $pos = strpos($line, '<view dir="');
