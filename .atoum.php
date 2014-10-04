@@ -68,7 +68,7 @@ $script->getRunner()->setTestGenerator($testGenerator);
 Publish code coverage report on coveralls.io
 */
 $sources = './src';
-$token = '9bfQpxPIGH2q85EvtfvIWSFldHWpcNcWk';
+$token = 'Tf0icNvc3qeuKVPQNn0534PFfqqB9fh78';
 $coverallsReport = new reports\asynchronous\coveralls($sources, $token);
 
 /*
