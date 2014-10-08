@@ -419,7 +419,7 @@ class Template implements \BFWTplInterface\ITemplate
      * Indique la fin du fichier template.
      * Une fois appelé, le script parse le fichier template.
      * 
-     * @param bool $no_echo (default: false) Indique s'il faut afficher le résultat par echo (défault) ou le renvoyer en sortie de fonction
+     * @param integer $no_echo (default: false) Indique s'il faut afficher le résultat par echo (défault) ou le renvoyer en sortie de fonction
      * 
      * @return string Retourne le résultat du parsage si $no_echo=1
      */

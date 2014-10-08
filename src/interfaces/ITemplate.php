@@ -28,6 +28,7 @@ interface ITemplate
      * A indiquer à la fin de l'utilisation du 1er block.
      * Permet de revenir au chemin racine dans l'arborescence pour les blocks suivant,
      * de façon à ce qu'il ne soit pas mis comme un sous-block du dernier block ouvert
+     * @return void
      */
     public function EndBlock();
     
@@ -35,6 +36,7 @@ interface ITemplate
      * Permet d'ajouter une variable à une liste qui sera lu partout, qu'on soit dans un block ou non
      * 
      * @param array $vars Les variables à ajouter (nom => valeur)
+     * @return void
      */
     public function AddGeneralVars($vars);
     
@@ -45,11 +47,13 @@ interface ITemplate
      * @param bool|string $name (default: false) Indique si c'est pour un block (le block courant est utilisé)
      * Il est aussi possible de donner le nom du block, cependant il est préférable de
      * le faire sur des block qui sont des conditions et non des blocks boucle.
+     * @return false|null
      */
     public function AddVars($vars, $name=false);
     
     /**
      * Permet de remonter dans les blocks
+     * @return void
      */
     public function remonte();
     
@@ -59,6 +63,7 @@ interface ITemplate
      * @param string    $name      Le nom du block
      * @param array|int $varsOrEnd (default: null) Les variables du block à passer (nom => valeur). Si int voir 3eme paramètre
      * @param int       $end       (default: null) Indique de combien de block on doit remonter
+     * @return void
      */
     public function AddBlockWithEnd($name, $varsOrEnd = null, $end=null);
     
@@ -77,7 +82,7 @@ interface ITemplate
      * Indique la fin du fichier template.
      * Une fois appelé, le script parse le fichier template.
      * 
-     * @param bool $no_echo (default: false) Indique s'il faut afficher le résultat par echo (défault) ou le renvoyer en sortie de fonction
+     * @param integer $no_echo (default: false) Indique s'il faut afficher le résultat par echo (défault) ou le renvoyer en sortie de fonction
      * 
      * @return string Retourne le résultat du parsage si $no_echo=1
      */
