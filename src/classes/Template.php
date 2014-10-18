@@ -884,8 +884,14 @@ class Template implements \BFWTplInterface\ITemplate
         $TamponFinal = '';
         
         //Récupération des infos
-        $Var = array();
-        preg_match($search, $line, $Var);
+        $Var   = array();
+        $match = preg_match($search, $line, $Var);
+        
+        if(!$match)
+        {
+            echo 'Template Erreur : La balise view n\'a pas pu être traité.<br/>Balise : '.htmlentities($line).'<br/>';
+            exit;
+        }
         
         foreach($Var as $key => $val)
         {
