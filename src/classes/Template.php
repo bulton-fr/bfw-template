@@ -914,11 +914,7 @@ class Template implements \BFWTplInterface\ITemplate
         global $path;
         $link = $path;
         
-        if($mods != 'false')
-        {
-            $link = '../modules/';
-            if($mods != 'true') {$link .= $mods.'/';}
-        }
+        if($mods != 'false') {$link = '../modules/'.$mods.'/';}
         
         if($dir == '' || $file == '')
         {
