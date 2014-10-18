@@ -157,93 +157,112 @@ class Template implements \BFWTplInterface\ITemplate
      */
     public function AddVars($vars, $name=false)
     {
-        if(is_array($vars)) //On vérifie que se soit bien un array
+        //On vérifie que se soit bien un array
+        if(!is_array($vars)) {return;}
+        
+        //On doit ajoute des vars à un block
+        if($name != false)
         {
-            if($name != false) //On doit ajoute des vars à un block
-            {
-                //Objectif : Se positionner dans le tableau des Block. On ne connais pas le nombre de sous block à l'avance
-                
-                //On place $TabVars à la racine du tableau. L'utilisation d'une référence permet 
-                //d'agir directement sur le contenu.
-                $TabVars = &$this->Block;
-                
-                if($this->CurrentBlock != '/') //On n'est pas dans le 1er block
-                {
-                    //On nous a indiquer le block auquel on doit s'ajouter 
-                    //(à ne faire que sur un block n'étant pas une boucle !!)
-                    if($name != true)
-                    {
-                        //Sécurité par rapport à des noms de block qui ne doivent pas être utilisé
-                        if(in_array($name, $this->BanWords))
-                        {
-                            return false;
-                        }
-                        
-                        //On regarde si le block existe
-                        $pos = strpos($this->CurrentBlock, '/'.$name.'/');
-                        
-                        //On prend l'adresse jusqu'au block voulu
-                        $current = substr($this->CurrentBlock, 0, $pos);
-                    }
-                    else //On prend le block courant
-                    {
-                        $pos = 1; //Triche pour passer la vérification en dessous
-                        $current = $this->CurrentBlock; //On prend le block courant
-                        
-                        //On ne connais pas son nom mais ce n'est pas grave, 
-                        //il est utile que si on nous l'a indiqué
-                        $name = '';
-                    }
-                    
-                    if($pos !== false) //Si le block existe bien
-                    {
-                        //Utile pour le cas où on nous donne le nom du block.
-                        //Permet de savoir si le block a été trouvé durant la lecture.
-                        $find = false;
-                        $exCurrent = explode('/', $current); //On découpe le chemin
-
-                        //On lit chaque morceau du chemin un par un
-                        foreach($exCurrent as $val)
-                        {
-                            if($val != '') //Si le nom n'est pas vide.
-                            {
-                                //On position $TabVars vers la référence du
-                                //sous-tableau qu'on lit par rapport à la où on est
-                                $TabVars = &$TabVars[$val];
-                                
-                                //Si le block qu'on cherchait à été trouvé à la lecture précédente on quitte le foreach
-                                //Il est utile de le faire à la boucle après le nom du tableau 
-                                //de façon à se positionner dans la 1er boucle.
-                                if($find == true)
-                                {
-                                    break;
-                                }
-                                
-                                //Si le block qu'on lit possède le même nom que celui qu'on recherche, 
-                                //on indique l'avoir trouvé.
-                                if($val == $name)
-                                {
-                                    $find = true;
-                                }
-                            }
-                        }
-                        
-                        //Puis on place $TabVars vers la référence du sous-array 'vars' par rapport à la où on est.
-                        $TabVars = &$TabVars['vars'];
-                    }
-                }
-            }
-            else //On n'est pas dans un block, $TabVars prend la référence de $this->Root_Variable
-            {
-                $TabVars = &$this->Root_Variable;
-            }
+            $block = $this->positionneVarsToBlock($name, $TabVars);
             
-            //On ajoute une par une toute les variables qui ont été données.
-            foreach($vars as $key => $val)
-            {
-                $TabVars[$key] = $val;
-            }
+            //Utilisation d'un nom de block qui ne doit pas être utilisé.
+            if($block === false) {return false;}
         }
+        //On n'est pas dans un block, $TabVars prend la référence de $this->Root_Variable
+        else {$TabVars = &$this->Root_Variable;}
+        
+        //On ajoute une par une toute les variables qui ont été données.
+        foreach($vars as $key => $val)
+        {
+            $TabVars[$key] = $val;
+        }
+    }
+    
+    /**
+     * Permet de se position dans un block bien précis et d'en retourner le tableau contenant les variables
+     * 
+     * 
+     * @param bool|string $name (default: false) Indique si c'est pour un block (le block courant est utilisé)
+     * Il est aussi possible de donner le nom du block, cependant il est préférable de
+     * le faire sur des block qui sont des conditions et non des blocks boucle.
+     * 
+     * @return array
+     */
+    protected function positionneVarsToBlock($name, &$vars)
+    {
+        //Objectif : Se positionner dans le tableau des Block. On ne connais pas le nombre de sous block à l'avance
+        
+        //On place $TabVars à la racine du tableau. L'utilisation d'une référence permet 
+        //d'agir directement sur le contenu.
+        $TabVars = &$this->Block;
+        
+        //On n'est pas dans le 1er block
+        if($this->CurrentBlock == '/')
+        {
+            $vars = &$TabVars;
+            return;
+        }
+        
+        //On nous a indiquer le block auquel on doit s'ajouter 
+        //(à ne faire que sur un block n'étant pas une boucle !!)
+        if($name != true)
+        {
+            //Sécurité par rapport à des noms de block qui ne doivent pas être utilisé
+            if(in_array($name, $this->BanWords)) {return false;}
+            
+            //On regarde si le block existe
+            $pos = strpos($this->CurrentBlock, '/'.$name.'/');
+            
+            //On prend l'adresse jusqu'au block voulu
+            $current = substr($this->CurrentBlock, 0, $pos);
+        }
+        else //On prend le block courant
+        {
+            //Triche pour passer la vérification en dessous
+            $pos = 1;
+            
+            //On prend le block courant
+            $current = $this->CurrentBlock;
+            
+            //On ne connais pas son nom mais ce n'est pas grave, 
+            //il est utile que si on nous l'a indiqué
+            $name = '';
+        }
+        
+        //Si le block existe bien
+        if($pos === false)
+        {
+            $vars = &$TabVars;
+            return;
+        }
+        
+        //Utile pour le cas où on nous donne le nom du block.
+        //Permet de savoir si le block a été trouvé durant la lecture.
+        $find = false;
+        $exCurrent = explode('/', $current); //On découpe le chemin
+        
+        //On lit chaque morceau du chemin un par un
+        foreach($exCurrent as $val)
+        {
+            //Si le nom est vide.
+            if($val == '') {continue;}
+            
+            //On position $TabVars vers la référence du
+            //sous-tableau qu'on lit par rapport à la où on est
+            $TabVars = &$TabVars[$val];
+            
+            //Si le block qu'on cherchait à été trouvé à la lecture précédente on quitte le foreach
+            //Il est utile de le faire à la boucle après le nom du tableau 
+            //de façon à se positionner dans la 1er boucle.
+            if($find == true) {break;}
+            
+            //Si le block qu'on lit possède le même nom que celui qu'on recherche, 
+            //on indique l'avoir trouvé.
+            if($val == $name) {$find = true;}
+        }
+        
+        //Puis on place $TabVars vers la référence du sous-array 'vars' par rapport à la où on est.
+        $vars = &$TabVars['vars'];
     }
     
     /**
