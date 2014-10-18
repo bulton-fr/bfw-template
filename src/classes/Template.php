@@ -881,7 +881,6 @@ class Template implements \BFWTplInterface\ITemplate
         $dir         = '';
         $file        = '';
         $opt         = '';
-        $mod         = '';
         $TamponFinal = '';
         
         //Récupération des infos
@@ -912,7 +911,6 @@ class Template implements \BFWTplInterface\ITemplate
         if($mods != 'false')
         {
             $link = '../modules/';
-            
             if($mods != 'true') {$link .= $mods.'/';}
         }
         
