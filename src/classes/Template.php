@@ -358,7 +358,7 @@ class Template implements \BFWTplInterface\ITemplate
         //On n'est pas dans le 1er block
         if($this->CurrentBlock != '/')
         {
-            positionneToBlock($name, $current, $boucle);
+            positionneToBlock($name, $current, $boucle, $Tab);
         }
         else //On est à la racine
         {
@@ -398,10 +398,11 @@ class Template implements \BFWTplInterface\ITemplate
      * @param string $name     Le nom du block
      * @param string &$current L'emplacement courant du block dans la structure
      * @param int    &$boucle  Le nombre de boucle du block
+     * @param array  &$Tab     Le tableau du block lu
      * 
      * @return void
      */
-    protected function positionneToBlock($name, &$current, &$boucle)
+    protected function positionneToBlock($name, &$current, &$boucle, &$Tab)
     {
         $pos = strpos($this->CurrentBlock, '/'.$name.'/'); //On regarde si le block existe déjà
         
