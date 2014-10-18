@@ -342,71 +342,31 @@ class Template implements \BFWTplInterface\ITemplate
     public function AddBlock($name, $vars = null, $end=null)
     {
         //Sécurité par rapport à des noms de block qui ne doivent pas être utilisé
-        if(in_array($name, $this->BanWords))
-        {
-            return false;
-        }
+        if(in_array($name, $this->BanWords)) {return false;}
         
-        $boucle = 0; //Par défaut on dit être dans la 1ere boucle du block
-        $Tab = &$this->Block; //On positionne $Tab vers la référence de $this->Block
+        //Initialise
         
-        if($this->CurrentBlock != '/') //On n'est pas dans le 1er block
+        //Par défaut on dit être dans la 1ere boucle du block
+        $boucle  = 0;
+        
+        //On positionne $Tab vers la référence de $this->Block
+        $Tab     = &$this->Block;
+        
+        //Initialise le curseur indiquant le block courant
+        $current = $current = $this->CurrentBlock.$name;
+        
+        //On n'est pas dans le 1er block
+        if($this->CurrentBlock != '/')
         {
-            $pos = strpos($this->CurrentBlock, '/'.$name.'/'); //On regarde si le block existe déjà
-            
-            //S'il existe déjà dans l'emplacement où on est dans l'arborescence, on ajoute une boucle dedans
-            if($pos !== false)
-            {
-                //On récupère le chemin direct vers l'array 'block' du block parent à celui voulu
-                $current = substr($this->CurrentBlock, 0, $pos);
-                $exCurrent = explode('/', $current); //On découpe le chemin
-                
-                //On positionne $Tab vers une référence vers le sous-array que l'on souhaite
-                foreach($exCurrent as $val)
-                {
-                    if($val != '')
-                    {
-                        $Tab = &$Tab[$val];
-                    }
-                }
-                
-                $current .= '/'.$name; //On y ajoute le nom de notre block dans le chemin
-                
-                //On compte le nombre d'élément contient l'array de notre block
-                //afin de connaitre le numéro de boucle suivant.
-                $boucle = count($Tab[$name]);
-            }
-            else //Sinon c'est que c'est un nouveau block. On doit le créer dans l'arborescence
-            {
-                //On positionne le chemin vers le sous block 'block' du block courrant
-                $current = $this->CurrentBlock.'/block';
-                $exCurrent = explode('/', $current); //On découpe le chemin
-                
-                //On positionne $Tab vers une référence vers le sous-array que l'on souhaite
-                foreach($exCurrent as $val)
-                {
-                    if($val != '')
-                    {
-                        $Tab = &$Tab[$val];
-                    }
-                }
-                
-                $current .= '/'.$name; //On y ajoute le nom de notre block dans le chemin
-                
-                if(isset($Tab[$name][$boucle])) //Le block existe déjà, on cherche la dernière boucle
-                {
-                    $boucle = count($Tab[$name]);
-                }
-            }
+            positionneToBlock($name, $current, $boucle);
         }
         else //On est à la racine
         {
-            if(isset($Tab[$name][$boucle])) //Le block existe déjà, on cherche la dernière boucle
+            //Le block existe déjà, on cherche la dernière boucle
+            if(isset($Tab[$name][$boucle]))
             {
                 $boucle = count($Tab[$name]);
             }
-            
-            $current = $this->CurrentBlock.$name; //on ajoute juste le nom
         }
         
         //On ajoute l'arborescence d'un block à $Tab dans le sous-Array correspondant à notre block
@@ -418,20 +378,61 @@ class Template implements \BFWTplInterface\ITemplate
         
         //On met à jour $this->CurrentBlock avec le block qu'on vient de créer et sa boucle.
         $this->CurrentBlock = $current.'/'.$boucle;
-        if(is_array($vars)) //Si des variable on été passé, on envoi ça à $this->AddVars()
-        {
-            $this->AddVars($vars, true);
-        }
         
-        if($end != null)
+        //Si des variable on été passé, on envoi ça à $this->AddVars()
+        if(is_array($vars)) {$this->AddVars($vars, true);}
+        
+        //S'il faut remonter dans les blocs
+        if(!is_null($end))
         {
-            for($i=0;$i<$end;$i++)
-            {
-                $this->remonte();
-            }
+            //On remonte de n block
+            for($i=0; $i<$end; $i++) {$this->remonte();}
         }
         
         return true; //Tout est ok.
+    }
+    
+    /**
+     * Permet de positionner le curseur sur le block voulu
+     * 
+     * @param string $name     Le nom du block
+     * @param string &$current L'emplacement courant du block dans la structure
+     * @param int    &$boucle  Le nombre de boucle du block
+     * 
+     * @return void
+     */
+    protected function positionneToBlock($name, &$current, &$boucle)
+    {
+        $pos = strpos($this->CurrentBlock, '/'.$name.'/'); //On regarde si le block existe déjà
+        
+        //On découpe le chemin
+        $exCurrent = explode('/', $current);
+        
+        //S'il existe déjà dans l'emplacement où on est dans l'arborescence, on ajoute une boucle dedans
+        if($pos !== false)
+        {
+            //On récupère le chemin direct vers l'array 'block' du block parent à celui voulu
+            $current = substr($this->CurrentBlock, 0, $pos);
+        }
+        //Sinon c'est que c'est un nouveau block. On doit le créer dans l'arborescence
+        else
+        {
+            //On positionne le chemin vers le sous block 'block' du block courrant
+            $current = $this->CurrentBlock.'/block';
+        }
+        
+        //On y ajoute le nom de notre block dans le chemin
+        $current .= '/'.$name;
+        
+        //On positionne $Tab vers une référence vers le sous-array que l'on souhaite
+        foreach($exCurrent as $val)
+        {
+            if($val != '') {$Tab = &$Tab[$val];}
+        }
+        
+        //On compte le nombre d'élément contient l'array de notre block
+        //afin de connaitre le numéro de boucle suivant.
+        $boucle = count($Tab[$name]);
     }
     
     /**
