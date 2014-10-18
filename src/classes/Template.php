@@ -186,7 +186,7 @@ class Template implements \BFWTplInterface\ITemplate
      * Il est aussi possible de donner le nom du block, cependant il est préférable de
      * le faire sur des block qui sont des conditions et non des blocks boucle.
      * 
-     * @return array
+     * @return null|false
      */
     protected function positionneVarsToBlock($name, &$vars)
     {
