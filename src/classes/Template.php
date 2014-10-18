@@ -596,6 +596,40 @@ class Template implements \BFWTplInterface\ITemplate
     }
     
     /**
+     * Retourne les variables global ou pour un block en particulier
+     * 
+     * @param string|bool $nameBlock Le chemin dans l'arborescence où on se trouve
+     * 
+     * @return array
+     */
+    public function getVars($nameBlock=false)
+    {
+        //On initialise $TabVars avec $this->Root_Variable
+        $Tab = $this->Root_Variable;
+        
+        //Si on est dans un block.
+        if($nameBlock != '/' && $nameBlock != false)
+        {
+            //On positionne $Tab vers la référence de $this->Block
+            $Tab = &$this->Block;
+            
+            //On découpe le chemin
+            $exCurrent = explode('/', $nameBlock);
+            
+            //On positionne $Tab vers une référence vers le sous-array que l'on souhaite
+            foreach($exCurrent as $val)
+            {
+                if($val != '') {$Tab = &$Tab[$val];}
+            }
+            
+            //Puis on place $TabVars vers la référence du sous-array 'vars' par rapport à la où on est.
+            $Tab = &$Tab['vars'];
+        }
+        
+        return $Tab;
+    }
+    
+    /**
      * Permet de remplacer la balise <var /> par sa valeur
      * 
      * @param string      $line      La ligne sur laquel on doit agir
@@ -628,26 +662,8 @@ class Template implements \BFWTplInterface\ITemplate
         //Si la balise n'a pas été trouvé, on sort.
         if(!($posDouble !== false || $posSimple !== false)) {return;}
         
-        //Si on est dans un block.
-        if($nameBlock != '/' && $nameBlock != false)
-        {
-            //On positionne $Tab vers la référence de $this->Block
-            $Tab = &$this->Block;
-            
-            //On découpe le chemin
-            $exCurrent = explode('/', $nameBlock);
-            
-            //On positionne $Tab vers une référence vers le sous-array que l'on souhaite
-            foreach($exCurrent as $val)
-            {
-                if($val != '') {$Tab = &$Tab[$val];}
-            }
-            
-            //Puis on place $TabVars vers la référence du sous-array 'vars' par rapport à la où on est.
-            $Tab = &$Tab['vars'];
-        }
-        //On n'est pas dans un block, $TabVars prend la référence de $this->Root_Variable
-        else {$Tab = $this->Root_Variable;}
+        //Récupère les variables
+        $Tab = $this->getVars($nameBlock);
         
         do
         {
@@ -676,36 +692,32 @@ class Template implements \BFWTplInterface\ITemplate
                 $replace = "#<var name='".self::REGEX."' />#";
                 $nameVar = $nameVarSimple;
             }
-            
             //Si la balise a été trouvé
-            if($replace != '')
+            else {break;}
+            
+            //On passe $search à true car la variable a été trouvé.
+            $search = true;
+            
+            //Recherche de l'attribut name dans les variable connu par le système
+            $varValue = '';
+            
+            //Recherche sur les variables locals aux template
+            if(isset($Tab[$nameVar[1]])) {$varValue = $Tab[$nameVar[1]];}
+            
+            //Si la balise a été trouvé dans les variables globaux
+            elseif(isset($this->Gen_Variable[$nameVar[1]]))
             {
-                //On passe $search à true si la variable a été trouvé.
-                $search = true;
-                
-                //Recherche de l'attribut name dans les variable connu par le système
-                
-                //Recherche sur les variables locals aux template
-                if(isset($Tab[$nameVar[1]]))
-                {
-                    //Remplace la balise par la valeur de la variable
-                    $line = preg_replace($replace, $Tab[$nameVar[1]], $line, 1);
-                }
-                
-                //Si la balise a été trouvé dans les variables globaux
-                elseif(isset($this->Gen_Variable[$nameVar[1]]))
-                {
-                    //Remplace la balise par la valeur
-                    $line = preg_replace($replace, $this->Gen_Variable[$nameVar[1]], $line, 1);
-                }
-                
-                //Erreur si la balise n'a pas été trouvé
-                else
-                {
-                    echo 'Template Erreur : Variable '.$nameVar[1].' inconnue.<br/>';
-                    exit;
-                }
+                $varValue = $this->Gen_Variable[$nameVar[1]];
             }
+            
+            //Erreur si la balise n'a pas été trouvé
+            else
+            {
+                echo 'Template Erreur : Variable '.$nameVar[1].' inconnue.<br/>';
+                exit;
+            }
+            
+            $line = preg_replace($replace, $varValue, $line, 1);
         }
         while($search); //On répete tant qu'il reste des balises <var /> dans la ligne
     }
