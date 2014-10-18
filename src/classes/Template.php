@@ -608,7 +608,7 @@ class Template implements \BFWTplInterface\ITemplate
         $Tab = $this->Root_Variable;
         
         //Si on est dans un block.
-        if($nameBlock != '/' && $nameBlock != false)
+        if(is_string($nameBlock) && $nameBlock != '/')
         {
             //On positionne $Tab vers la référence de $this->Block
             $Tab = &$this->Block;
@@ -670,8 +670,6 @@ class Template implements \BFWTplInterface\ITemplate
             //Initialisation
             $nameVarSimple = array();
             $nameVarDouble = array();
-            $nameVar       = array();
-            $replace       = '';
             $search        = false;
             
             //On recherche dans la ligne la 1ere balise <var...
@@ -681,19 +679,19 @@ class Template implements \BFWTplInterface\ITemplate
             $search_simple = preg_match("#<var name=\'".self::REGEX."\' />#", $line, $nameVarSimple);
             
             //Si la balise à double quote a été trouvé
-            if($search_double)
-            {
-                $replace = '#<var name="'.self::REGEX.'" />#';
-                $nameVar = $nameVarDouble;
-            }
+            if(!$search_double && !$search_simple) {break;}
+            
+            //Initialise avec les valeurs double quote.
+            $replace = '#<var name="'.self::REGEX.'" />#';
+            $nameVar = $nameVarDouble;
+            
             //Si la balise à simple quote à été trouvé
-            elseif($search_simple)
+            if($search_simple)
             {
+                //Regex pour le simple quote et update de $nameVar pour utilisé le bon array
                 $replace = "#<var name='".self::REGEX."' />#";
                 $nameVar = $nameVarSimple;
             }
-            //Si la balise a été trouvé
-            else {break;}
             
             //On passe $search à true car la variable a été trouvé.
             $search = true;
@@ -717,9 +715,11 @@ class Template implements \BFWTplInterface\ITemplate
                 exit;
             }
             
+            //Remplace dans la ligne la balise par la valeur
             $line = preg_replace($replace, $varValue, $line, 1);
         }
-        while($search); //On répete tant qu'il reste des balises <var /> dans la ligne
+        //On répete tant qu'il reste des balises <var /> dans la ligne
+        while($search);
     }
     
     /**
