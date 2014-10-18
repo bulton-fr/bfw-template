@@ -869,64 +869,62 @@ class Template implements \BFWTplInterface\ITemplate
     {
         //Recherche
         $pos = strpos($line, '<view dir="');
+        if($pos === false) {return $line;}
         
-        if($pos !== false)
+        //<view dir="mydir" file="myfile" opt="mesoptionsJson" mod="nomDuModule" />
+        $search  = '#<view '.self::REGEXATTR.'="'.self::REGEX.'" ';
+        $search .= self::REGEXATTR.'="'.self::REGEX.'" ';
+        $search .= self::REGEXATTR.'="'.self::REGEXJSON.'" (';
+        $search .= self::REGEXATTR.'="'.self::REGEX.'") />#';
+        
+        //Initialise
+        $dir         = '';
+        $file        = '';
+        $opt         = '';
+        $mod         = '';
+        $TamponFinal = '';
+        
+        //Récupération des infos
+        $Var = array();
+        preg_match($search, $line, $Var);
+        
+        foreach($Var as $key => $val)
         {
-            $search  = '#<view '.self::REGEXATTR.'="'.self::REGEX.'" ';
-            $search .= self::REGEXATTR.'="'.self::REGEX.'" ';
-            $search .= self::REGEXATTR.'="'.self::REGEXJSON.'" (';
-            $search .= self::REGEXATTR.'="'.self::REGEX.'") />#';
-            
-            //Récupération des infos
-            $Var = array();
-            preg_match($search, $line, $Var);
-            
-            foreach($Var as $key => $val)
+            $key2 = $key + 1;
+            if($key < 6 && $key > 0 && $key%2 == 1)
             {
-                $key2 = $key + 1;
-                if($key < 6 && $key > 0)
-                {
-                    if($key%2 == 1)
-                    {
-                        ${$val} = $Var[$key2];
-                    }
-                }
+                ${$val} = $Var[$key2];
             }
-            
-            $opt .= $Var[7].$Var[8];
-            if(isset($Var[9]))
-            {
-                $mods = $Var[11];
-            }
-            else
-            {
-                $mods = false;
-            }
-            
-            //Remplacement
-            $line = preg_replace($search, '', $line);
-            
-            //Inclusion de la vue
-            global $path;
-            $link = $path;
-            
-            if($mods != 'false')
-            {
-                $link = '../modules/';
-                if($mods != 'true')
-                {
-                    $link .= $mods.'/';
-                }
-            }
-            
-            $link .= $dir.'/'.$file.'.php';
-            require_once($link);
-            
-            return $TamponFinal;
         }
-        else
+        
+        $opt .= $Var[7].$Var[8];
+        $mods = false;
+        
+        if(isset($Var[9])) {$mods = $Var[11];}
+        
+        //Remplacement
+        $line = preg_replace($search, '', $line);
+        
+        //Inclusion de la vue
+        global $path;
+        $link = $path;
+        
+        if($mods != 'false')
         {
-            return $line;
+            $link = '../modules/';
+            
+            if($mods != 'true') {$link .= $mods.'/';}
         }
+        
+        if($dir == '' || $file == '')
+        {
+            echo 'Template Erreur : Le controleur à inclure n\'a pas été trouvé.<br/>Balise : '.htmlentities($line).'<br/>';
+            exit;
+        }
+        
+        $link .= $dir.'/'.$file.'.php';
+        require_once($link);
+        
+        return $TamponFinal;
     }
 }
