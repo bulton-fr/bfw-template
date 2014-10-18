@@ -609,133 +609,118 @@ class Template implements \BFWTplInterface\ITemplate
         $posDouble = strpos($line, '<var name="');
         $posSimple = strpos($line, "<var name='");
         
-        if($posDouble !== false || $posSimple !== false) //Si au moins 1 balise a été trouvé
+        //Si au moins 1 balise a été trouvé
+        if($posDouble !== false || $posSimple !== false)
         {
-            if($nameBlock != '/' && $nameBlock != false) //Si on est dans un block.
+            //Si on est dans un block.
+            if($nameBlock != '/' && $nameBlock != false)
             {
-                $Tab = &$this->Block; //On positionne $Tab vers la référence de $this->Block
-                $exCurrent = explode('/', $nameBlock); //On découpe le chemin
+                //On positionne $Tab vers la référence de $this->Block
+                $Tab = &$this->Block;
+                
+                //On découpe le chemin
+                $exCurrent = explode('/', $nameBlock);
                 
                 //On positionne $Tab vers une référence vers le sous-array que l'on souhaite
                 foreach($exCurrent as $val)
                 {
-                    if($val != '')
-                    {
-                        $Tab = &$Tab[$val];
-                    }
+                    if($val != '') {$Tab = &$Tab[$val];}
                 }
                 
                 //Puis on place $TabVars vers la référence du sous-array 'vars' par rapport à la où on est.
                 $Tab = &$Tab['vars'];
             }
-            else //On n'est pas dans un block, $TabVars prend la référence de $this->Root_Variable
-            {
-                $Tab = $this->Root_Variable;
-            }
+            
+            //On n'est pas dans un block, $TabVars prend la référence de $this->Root_Variable
+            else {$Tab = $this->Root_Variable;}
             
             do
             {
-                $nameVar = array(); //Déclaration de variable à array vide.
-
-                //On recherche dans la ligne la 1ere balise <var name"" />.
+                //Initialisation
+                $nameVarSimple = array();
+                $nameVarDouble = array();
+                $nameVar       = array();
+                $replace       = '';
+                $search        = false;
+                
+                //On recherche dans la ligne la 1ere balise <var...
                 //Le contenu de name est mis dans $nameVar[1]
                 //Si la balise a été trouvé, $search vaux true, sinon false.
-                $search_double = preg_match('#<var name="'.self::REGEX.'" />#', $line, $nameVar);
-                $search_simple = false;
+                $search_double = preg_match('#<var name="'.self::REGEX.'" />#', $line, $nameVarDouble);
+                $search_simple = preg_match("#<var name=\'".self::REGEX."\' />#", $line, $nameVarSimple);
                 
-                //Si une balise a été trouve. On remplace la balise par son contenu. 
-                //On le fait que pour une seul balise à la fois
+                //Si la balise à double quote a été trouvé
                 if($search_double)
                 {
-                    if(isset($Tab[$nameVar[1]]))
-                    {
-                        $line = preg_replace('#<var name="'.self::REGEX.'" />#', $Tab[$nameVar[1]], $line, 1);
-                    }
-                    else
-                    {
-                        if(isset($this->Gen_Variable[$nameVar[1]]))
-                        {
-                            $line = preg_replace(
-                                            '#<var name="'.self::REGEX.'" />#', 
-                                            $this->Gen_Variable[$nameVar[1]], 
-                                            $line, 
-                                            1
-                            );
-                        }
-                        else
-                        {
-                            echo 'Template Erreur : Variable '.$nameVar[1].' inconnue.<br/>';
-                            exit;
-                        }
-                    }
+                    $replace = '#<var name="'.self::REGEX.'" />#';
+                    $nameVar = $nameVarDouble;
                 }
-                else
+                //Si la balise à simple quote à été trouvé
+                elseif($search_simple)
                 {
-                    $search_simple = preg_match("#<var name=\'".self::REGEX."\' />#", $line, $nameVar);
-                    if($search_simple)
-                    {
-                        if(isset($Tab[$nameVar[1]]))
-                        {
-                            $line = preg_replace("#<var name='".self::REGEX."' />#", $Tab[$nameVar[1]], $line, 1);
-                        }
-                        else
-                        {
-                            if(isset($this->Gen_Variable[$nameVar[1]]))
-                            {
-                                $line = preg_replace(
-                                                "#<var name='".self::REGEX."' />#", 
-                                                $this->Gen_Variable[$nameVar[1]],
-                                                $line,
-                                                1
-                                );
-                            }
-                            else
-                            {
-                                echo 'Template Erreur : Variable '.$nameVar[1].' inconnue.<br/>';
-                                exit;
-                            }
-                        }
-                    }
+                    $replace = "#<var name='".self::REGEX."' />#";
+                    $nameVar = $nameVarSimple;
                 }
                 
-                if($search_simple || $search_double)
+                //Si la balise a été trouvé
+                if($replace != '')
                 {
+                    //On passe $search à true si la variable a été trouvé.
                     $search = true;
-                }
-                else
-                {
-                    $search = false;
+                    
+                    //Recherche de l'attribut name dans les variable connu par le système
+                    
+                    //Recherche sur les variables locals aux template
+                    if(isset($Tab[$nameVar[1]]))
+                    {
+                        //Remplace la balise par la valeur de la variable
+                        $line = preg_replace($replace, $Tab[$nameVar[1]], $line, 1);
+                    }
+                    
+                    //Si la balise a été trouvé dans les variables globaux
+                    elseif(isset($this->Gen_Variable[$nameVar[1]]))
+                    {
+                        //Remplace la balise par la valeur
+                        $line = preg_replace($replace, $this->Gen_Variable[$nameVar[1]], $line, 1);
+                    }
+                    
+                    //Erreur si la balise n'a pas été trouvé
+                    else
+                    {
+                        echo 'Template Erreur : Variable '.$nameVar[1].' inconnue.<br/>';
+                        exit;
+                    }
                 }
             }
             while($search); //On répete tant qu'il reste des balises <var /> dans la ligne
         }
 
+        //Recherche de la balise "<var Uri />"
         $posVarUri = strpos($line, '<varUri');
         if($posVarUri !== false)
         {
             global $base_url;
             
+            //Initialisation
             $search = false;
+            $regex  = '#<varUri(\s*)/>#';
+            
             do
             {
-                $nameVar = array(); //Déclaration de variable à array vide.
+                //Déclaration de variable à array vide.
+                $nameVar = array();
                 
-                //On recherche dans la ligne la 1ere balise <var name"" />.
-                //Le contenu de name est mis dans $nameVar[1]
-                //Si la balise a été trouvé, $search vaux true, sinon false.
-                $search_uri1 = preg_match('#<varUri />#', $line, $nameVar);
+                //On recherche dans la ligne la 1ere balise <varUri...
+                $search_uri1 = preg_match($regex, $line, $nameVar);
                 
+                //Si la balise a été trouvé
                 if($search_uri1)
                 {
-                    $line = preg_replace('#<varUri />#', $base_url, $line, 1);
-                }
-                else
-                {
-                    $search_uri2 = preg_match('#<varUri/>#', $line, $nameVar);
-                    if($search_uri2)
-                    {
-                        $line = preg_replace('#<varUri/>#', $base_url, $line, 1);
-                    }
+                    //On remplace dans la ligne la balise par la valeur
+                    $line   = preg_replace($regex, $base_url, $line, 1);
+                    
+                    //Met à jour $search
+                    $search = true;
                 }
             }
             while($search);
@@ -841,7 +826,7 @@ class Template implements \BFWTplInterface\ITemplate
             
             //Récupération des infos
             $Var = array();
-            $match = preg_match($search, $line, $Var);
+            preg_match($search, $line, $Var);
             
             foreach($Var as $key => $val)
             {
