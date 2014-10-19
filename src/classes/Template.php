@@ -871,13 +871,14 @@ class Template implements \BFWTplInterface\ITemplate
         $pos = strpos($line, '<view dir="');
         if($pos === false) {return $line;}
         
+        //Création de la regex pour supporter la balise.
         //<view dir="mydir" file="myfile" opt="mesoptionsJson" mod="nomDuModule" />
         $search  = '#<view '.self::REGEXATTR.'="'.self::REGEX.'" ';
         $search .= self::REGEXATTR.'="'.self::REGEX.'" ';
         $search .= self::REGEXATTR.'="'.self::REGEXJSON.'" (';
         $search .= self::REGEXATTR.'="'.self::REGEX.'") />#';
         
-        //Initialise
+        //Initialise les variables
         $dir         = '';
         $file        = '';
         $opt         = '';
@@ -891,35 +892,46 @@ class Template implements \BFWTplInterface\ITemplate
         $Var   = array();
         $match = preg_match($search, $line, $Var);
         
+        //Si la balise existe mais la regex à planter.
         if(!$match)
         {
             echo 'Template Erreur : La balise view n\'a pas pu être traité.<br/>Balise : '.htmlentities($line).'<br/>';
             exit;
         }
         
+        //Array contenant la liste des attributs à lire
         $authorizedAttr = array('dir', 'file', 'opt', 'mod');
+        
+        //Leurs emplacement possible dans le tableau retour du preg_match
         $keyAttr        = array(1, 3, 5);
         
+        //On lit ces clé possible
         foreach($keyAttr as $key)
         {
+            //On vérifie que la clé est bien autorisé
             if(!in_array($Var[$key], $authorizedAttr)) {continue;}
+            
+            //Si c'est ok, on met à jour la variable correspondante avec la valeur de l'attribut de la balise
             ${$Var[$key]} = $Var[$key+1];
         }
         
-        if(isset($Var[7])) {$link = '../modules/'.$mods.'/';}
+        //Gestion des modules
+        if(isset($Var[7])) {$link = '../modules/'.$Var[8].'/';}
         
-        if($dir == '' || $file == '')
+        //Si aucun fichier est indiqué, on fait une erreur
+        if($file == '')
         {
             echo 'Template Erreur : Le controleur à inclure n\'a pas été trouvé.<br/>Balise : '.htmlentities($line).'<br/>';
             exit;
         }
         
-        //Remplacement
-        $line = preg_replace($search, '', $line);
-        
+        //On met à jour le lien du fichier à inclure avec le dossier et fichier
         $link .= $dir.'/'.$file.'.php';
+        
+        //On inclus le fichier
         require_once($link);
         
+        //Et on retourne la variable qui est sensé contenir le tpl du controller.
         return $TamponFinal;
     }
 }
