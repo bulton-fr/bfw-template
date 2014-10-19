@@ -115,7 +115,7 @@ class Parse
             if($this->chercheFinBlock($line, $nbOpenBlock))
             {
                 //On enlève les balises block de la ligne
-                $cont = preg_replace('#<block name="'.$this->REGEX.'">(.+)</block>#', '$2', $line);
+                $cont = preg_replace('#<block name="'.self::REGEX.'">(.+)</block>#', '$2', $line);
                 $this->traitementBlock($nameBlockRoot, $nameBlockFind, $cont); //on envoi au traitement
                 
                 //On vide certaines variables
