@@ -62,12 +62,12 @@ class Parse
         
         if($no_echo == 0) //On affiche le résultat via un simple echo.
         {
-            echo $tpl->getTamponFinal();
+            echo $this->Template->getTamponFinal();
             return '';
         }
         else
         {
-            return $tpl->getTamponFinal();
+            return $this->Template->getTamponFinal();
         }
     }
     
@@ -85,7 +85,7 @@ class Parse
         $nbOpenBlock = 0; //Le nombre de block rencontré (permet de trouvé le block fermant voulu)
         
         //**Lecture du fichier
-        $fop = fopen($this->FileLink, 'r'); //Ouverture du fichier en lecture seul
+        $fop = fopen($this->Template->getFileLink(), 'r'); //Ouverture du fichier en lecture seul
         while($line = fgets($fop)) //Analise ligne par ligne
         {
             $this->analize($line, $tamponBlock, $nameBlockFind, $nbOpenBlock, $nameBlockRoot);
@@ -115,7 +115,7 @@ class Parse
             if($this->chercheFinBlock($line, $nbOpenBlock))
             {
                 //On enlève les balises block de la ligne
-                $cont = preg_replace('#<block name="'.$this->Template->REGEX.'">(.+)</block>#', '$2', $line);
+                $cont = preg_replace('#<block name="'.$this->REGEX.'">(.+)</block>#', '$2', $line);
                 $this->traitementBlock($nameBlockRoot, $nameBlockFind, $cont); //on envoi au traitement
                 
                 //On vide certaines variables
@@ -149,7 +149,9 @@ class Parse
             //on ajoute la ligne au tampon final qui sera affiché
             else
             {
-                $this->TamponFinal .= $this->remplace_view($this->remplaceAttributs($line, $nameBlockRoot));
+                $tampon  = $this->Template->getTamponFinal();
+                $tampon .= $this->remplace_view($this->remplaceAttributs($line, $nameBlockRoot));
+                $this->Template->setTamponFinal($tampon);
             }
         }
     }
@@ -167,7 +169,7 @@ class Parse
         $tamponBlock      = ''; //Le tampon qui servira si un sous block est rencontré
         
         //Si le nom du block n'est pas autorisé. On stop le traitement.
-        if(in_array($nameBlockFind, $this->BanWords)) {return false;}
+        if(in_array($nameBlockFind, $this->Template->getBanWords())) {return false;}
         
         //Si on est pas à la racine, on ajoute 'block' dans le chemin
         if($nameBlockRoot != '/') {$nameBlockRoot .= '/block/';}
@@ -176,7 +178,7 @@ class Parse
         $nameBlockFind = ''; //On vide la variable contenant le nom de notre block
         $nbOpenBlock   = 0; //Mise à 0 du nombre de block trouvé
         
-        $Tab = &$this->getBlock(); //On positionne $Tab vers la référence de $this->Block
+        $Tab = &$this->Template->getBlock(); //On positionne $Tab vers la référence de $this->Block
         $exCurrent = explode('/', $nameBlockRoot); //On découpe le chemin
         
         //Permet d'indiquer qu'il y a un eu un block non-existant durant la lecture.
@@ -257,7 +259,7 @@ class Parse
         if(!($posDouble !== false || $posSimple !== false)) {return;}
         
         //Récupère les variables
-        $Tab = $this->getVars($nameBlock);
+        $Tab = $this->Template->getVars($nameBlock);
         
         do
         {
@@ -294,7 +296,7 @@ class Parse
             $varValue = '';
             
             //Récupère les variables générales
-            $genVariable = $this->getGen_Variable();
+            $genVariable = $this->Template->getGen_Variable();
             
             //Recherche sur les variables locals aux template
             if(isset($Tab[$nameVar[1]])) {$varValue = $Tab[$nameVar[1]];}

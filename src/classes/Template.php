@@ -104,16 +104,25 @@ class Template implements \BFWTplInterface\ITemplate
     /**
      * Accesseur get vers l'attribut $FileLink
      * 
-     * @return array
+     * @return string
      */
     public function getFileLink() {return $this->FileLink;}
     
     /**
      * Accesseur get vers l'attribut $TamponFinal
      * 
-     * @return array
+     * @return string
      */
     public function getTamponFinal() {return $this->TamponFinal;}
+    
+    /**
+     * Accesseur set vers l'attribut $TamponFinal
+     * 
+     * @param string $value : La nouvelle valeur
+     * 
+     * @return void
+     */
+    public function setTamponFinal($value) {$this->TamponFinal = $value;}
     
     /**
      * Accesseur get vers l'attribut $Root_Variable
