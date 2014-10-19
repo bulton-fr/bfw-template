@@ -883,6 +883,10 @@ class Template implements \BFWTplInterface\ITemplate
         $opt         = '';
         $TamponFinal = '';
         
+        //Initialisation des liens pour inclure la vue
+        global $path;
+        $link = $path;
+        
         //Récupération des infos
         $Var   = array();
         $match = preg_match($search, $line, $Var);
@@ -893,34 +897,25 @@ class Template implements \BFWTplInterface\ITemplate
             exit;
         }
         
-        foreach($Var as $key => $val)
+        $authorizedAttr = array('dir', 'file', 'opt', 'mod');
+        $keyAttr        = array(1, 3, 5);
+        
+        foreach($keyAttr as $key)
         {
-            $key2 = $key + 1;
-            if($key < 6 && $key > 0 && $key%2 == 1)
-            {
-                ${$val} = $Var[$key2];
-            }
+            if(!in_array($Var[$key], $authorizedAttr)) {continue;}
+            ${$Var[$key]} = $Var[$key+1];
         }
         
-        $opt .= $Var[7].$Var[8];
-        $mods = false;
-        
-        if(isset($Var[9])) {$mods = $Var[11];}
-        
-        //Remplacement
-        $line = preg_replace($search, '', $line);
-        
-        //Inclusion de la vue
-        global $path;
-        $link = $path;
-        
-        if($mods != 'false') {$link = '../modules/'.$mods.'/';}
+        if(isset($Var[7])) {$link = '../modules/'.$mods.'/';}
         
         if($dir == '' || $file == '')
         {
             echo 'Template Erreur : Le controleur à inclure n\'a pas été trouvé.<br/>Balise : '.htmlentities($line).'<br/>';
             exit;
         }
+        
+        //Remplacement
+        $line = preg_replace($search, '', $line);
         
         $link .= $dir.'/'.$file.'.php';
         require_once($link);
