@@ -39,6 +39,46 @@ class Template extends atoum
     {
         
     }
+    
+    /**
+     * Test de la méthode getFileLink()
+     */
+    public function testGetFileLink()
+    {
+        
+    }
+    
+    /**
+     * Test de la méthode getTamponFinal()
+     */
+    public function testGetTamponFinal()
+    {
+        
+    }
+    
+    /**
+     * Test de la méthode getRoot_Variable()
+     */
+    public function testGetRoot_Variable()
+    {
+        
+    }
+    
+    /**
+     * Test de la méthode getGen_Variable()
+     */
+    public function testGetGen_Variable()
+    {
+        
+    }
+    
+    /**
+     * Test de la méthode getBanWords()
+     */
+    public function testGetBanWords()
+    {
+        
+    }
 
     /**
      * Test du constructeur : Template($file, $vars=)

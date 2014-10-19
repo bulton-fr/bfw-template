@@ -13,10 +13,6 @@ namespace BFWTplInterface;
  */
 interface ITemplate
 {
-    const REGEX = '([0-9a-zA-Z._-]+)'; //La regex pour la recherche dans les blocks et variables
-    const REGEXJSON = '(\[|\{|\")(.*)(\"|\}|\])'; //La regex pour la recherche prévu pour marcher avec json
-    const REGEXATTR = '(dir|file|opt|mod)'; //La regex pour les noms des attributs
-    
     /**
      * Accesseur get vers l'attribut $Block
      * 
