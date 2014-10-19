@@ -867,9 +867,8 @@ class Template implements \BFWTplInterface\ITemplate
      */
     protected function remplace_view($line)
     {
-        //Recherche
-        $pos = strpos($line, '<view dir="');
-        if($pos === false) {return $line;}
+        $pos = strpos($line, '<view dir="'); //Recherche
+        if($pos === false) {return $line;} //Si balise pas trouvé, on sort
         
         //Création de la regex pour supporter la balise.
         //<view dir="mydir" file="myfile" opt="mesoptionsJson" mod="nomDuModule" />
@@ -879,34 +878,27 @@ class Template implements \BFWTplInterface\ITemplate
         $search .= self::REGEXATTR.'="'.self::REGEX.'") />#';
         
         //Initialise les variables
-        $dir         = '';
-        $file        = '';
-        $opt         = '';
-        $TamponFinal = '';
+        $dir         = ''; //Le dossier à lire
+        $file        = ''; //Le fichier à inclure
+        $opt         = ''; //Les différetes options
+        $TamponFinal = ''; //La variable qui contiendra la sortie du tpl du controller inclu
+        $Var         = array(); //Tableau contenant chaque élément trouvé dans le preg_match
         
-        //Initialisation des liens pour inclure la vue
         global $path;
-        $link = $path;
+        $link = $path; //Initialisation des liens pour inclure la vue
         
-        //Récupération des infos
-        $Var   = array();
-        $match = preg_match($search, $line, $Var);
+        $match = preg_match($search, $line, $Var); //Récupération des infos
         
-        //Si la balise existe mais la regex à planter.
-        if(!$match)
+        if(!$match) //Si la balise existe mais la regex à planter.
         {
             echo 'Template Erreur : La balise view n\'a pas pu être traité.<br/>Balise : '.htmlentities($line).'<br/>';
             exit;
         }
         
-        //Array contenant la liste des attributs à lire
-        $authorizedAttr = array('dir', 'file', 'opt', 'mod');
+        $authorizedAttr = array('dir', 'file', 'opt', 'mod'); //liste des attributs à lire
+        $keyAttr        = array(1, 3, 5); //Emplacement possible de chaque attribut en sortie du preg_match
         
-        //Leurs emplacement possible dans le tableau retour du preg_match
-        $keyAttr        = array(1, 3, 5);
-        
-        //On lit ces clé possible
-        foreach($keyAttr as $key)
+        foreach($keyAttr as $key) //On lit ces clé possible
         {
             //On vérifie que la clé est bien autorisé
             if(!in_array($Var[$key], $authorizedAttr)) {continue;}
@@ -918,18 +910,14 @@ class Template implements \BFWTplInterface\ITemplate
         //Gestion des modules
         if(isset($Var[7])) {$link = '../modules/'.$Var[8].'/';}
         
-        //Si aucun fichier est indiqué, on fait une erreur
-        if($file == '')
+        if($file == '') //Si aucun fichier est indiqué, on fait une erreur
         {
             echo 'Template Erreur : Le controleur à inclure n\'a pas été trouvé.<br/>Balise : '.htmlentities($line).'<br/>';
             exit;
         }
         
-        //On met à jour le lien du fichier à inclure avec le dossier et fichier
-        $link .= $dir.'/'.$file.'.php';
-        
-        //On inclus le fichier
-        require_once($link);
+        $link .= $dir.'/'.$file.'.php'; //Maj du lien à inclure avec le dossier et le fichier
+        require_once($link); //On inclus le fichier
         
         //Et on retourne la variable qui est sensé contenir le tpl du controller.
         return $TamponFinal;
