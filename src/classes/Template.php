@@ -99,10 +99,51 @@ class Template implements \BFWTplInterface\ITemplate
      * 
      * @return array
      */
-    public function getBlock()
-    {
-        return $this->Block;
-    }
+    public function getBlock() {return $this->Block;}
+    
+    /**
+     * Accesseur get vers l'attribut $FileLink
+     * 
+     * @return string
+     */
+    public function getFileLink() {return $this->FileLink;}
+    
+    /**
+     * Accesseur get vers l'attribut $TamponFinal
+     * 
+     * @return string
+     */
+    public function getTamponFinal() {return $this->TamponFinal;}
+    
+    /**
+     * Accesseur set vers l'attribut $TamponFinal
+     * 
+     * @param string $value : La nouvelle valeur
+     * 
+     * @return void
+     */
+    public function setTamponFinal($value) {$this->TamponFinal = $value;}
+    
+    /**
+     * Accesseur get vers l'attribut $Root_Variable
+     * 
+     * @return array
+     */
+    public function getRoot_Variable() {return $this->Root_Variable;}
+    
+    /**
+     * Accesseur get vers l'attribut $Gen_Variable
+     * 
+     * @return array
+     */
+    public function getGen_Variable() {return $this->Gen_Variable;}
+    
+    /**
+     * Accesseur get vers l'attribut $BanWords
+     * 
+     * @return array
+     */
+    public function getBanWords() {return $this->BanWords;}
     
     /**
      * Construteur
@@ -157,93 +198,112 @@ class Template implements \BFWTplInterface\ITemplate
      */
     public function AddVars($vars, $name=false)
     {
-        if(is_array($vars)) //On vérifie que se soit bien un array
+        //On vérifie que se soit bien un array
+        if(!is_array($vars)) {return;}
+        
+        //On doit ajoute des vars à un block
+        if($name != false)
         {
-            if($name != false) //On doit ajoute des vars à un block
-            {
-                //Objectif : Se positionner dans le tableau des Block. On ne connais pas le nombre de sous block à l'avance
-                
-                //On place $TabVars à la racine du tableau. L'utilisation d'une référence permet 
-                //d'agir directement sur le contenu.
-                $TabVars = &$this->Block;
-                
-                if($this->CurrentBlock != '/') //On n'est pas dans le 1er block
-                {
-                    //On nous a indiquer le block auquel on doit s'ajouter 
-                    //(à ne faire que sur un block n'étant pas une boucle !!)
-                    if($name != true)
-                    {
-                        //Sécurité par rapport à des noms de block qui ne doivent pas être utilisé
-                        if(in_array($name, $this->BanWords))
-                        {
-                            return false;
-                        }
-                        
-                        //On regarde si le block existe
-                        $pos = strpos($this->CurrentBlock, '/'.$name.'/');
-                        
-                        //On prend l'adresse jusqu'au block voulu
-                        $current = substr($this->CurrentBlock, 0, $pos);
-                    }
-                    else //On prend le block courant
-                    {
-                        $pos = 1; //Triche pour passer la vérification en dessous
-                        $current = $this->CurrentBlock; //On prend le block courant
-                        
-                        //On ne connais pas son nom mais ce n'est pas grave, 
-                        //il est utile que si on nous l'a indiqué
-                        $name = '';
-                    }
-                    
-                    if($pos !== false) //Si le block existe bien
-                    {
-                        //Utile pour le cas où on nous donne le nom du block.
-                        //Permet de savoir si le block a été trouvé durant la lecture.
-                        $find = false;
-                        $exCurrent = explode('/', $current); //On découpe le chemin
-
-                        //On lit chaque morceau du chemin un par un
-                        foreach($exCurrent as $val)
-                        {
-                            if($val != '') //Si le nom n'est pas vide.
-                            {
-                                //On position $TabVars vers la référence du
-                                //sous-tableau qu'on lit par rapport à la où on est
-                                $TabVars = &$TabVars[$val];
-                                
-                                //Si le block qu'on cherchait à été trouvé à la lecture précédente on quitte le foreach
-                                //Il est utile de le faire à la boucle après le nom du tableau 
-                                //de façon à se positionner dans la 1er boucle.
-                                if($find == true)
-                                {
-                                    break;
-                                }
-                                
-                                //Si le block qu'on lit possède le même nom que celui qu'on recherche, 
-                                //on indique l'avoir trouvé.
-                                if($val == $name)
-                                {
-                                    $find = true;
-                                }
-                            }
-                        }
-                        
-                        //Puis on place $TabVars vers la référence du sous-array 'vars' par rapport à la où on est.
-                        $TabVars = &$TabVars['vars'];
-                    }
-                }
-            }
-            else //On n'est pas dans un block, $TabVars prend la référence de $this->Root_Variable
-            {
-                $TabVars = &$this->Root_Variable;
-            }
+            $block = $this->positionneVarsToBlock($name, $TabVars);
             
-            //On ajoute une par une toute les variables qui ont été données.
-            foreach($vars as $key => $val)
-            {
-                $TabVars[$key] = $val;
-            }
+            //Utilisation d'un nom de block qui ne doit pas être utilisé.
+            if($block === false) {return false;}
         }
+        //On n'est pas dans un block, $TabVars prend la référence de $this->Root_Variable
+        else {$TabVars = &$this->Root_Variable;}
+        
+        //On ajoute une par une toute les variables qui ont été données.
+        foreach($vars as $key => $val)
+        {
+            $TabVars[$key] = $val;
+        }
+    }
+    
+    /**
+     * Permet de se position dans un block bien précis et d'en retourner le tableau contenant les variables
+     * 
+     * 
+     * @param bool|string $name (default: false) Indique si c'est pour un block (le block courant est utilisé)
+     * Il est aussi possible de donner le nom du block, cependant il est préférable de
+     * le faire sur des block qui sont des conditions et non des blocks boucle.
+     * 
+     * @return null|false
+     */
+    protected function positionneVarsToBlock($name, &$vars)
+    {
+        //Objectif : Se positionner dans le tableau des Block. On ne connais pas le nombre de sous block à l'avance
+        
+        //On place $TabVars à la racine du tableau. L'utilisation d'une référence permet 
+        //d'agir directement sur le contenu.
+        $TabVars = &$this->Block;
+        
+        //On n'est pas dans le 1er block
+        if($this->CurrentBlock == '/')
+        {
+            $vars = &$TabVars;
+            return;
+        }
+        
+        //On nous a indiquer le block auquel on doit s'ajouter 
+        //(à ne faire que sur un block n'étant pas une boucle !!)
+        if($name != true)
+        {
+            //Sécurité par rapport à des noms de block qui ne doivent pas être utilisé
+            if(in_array($name, $this->BanWords)) {return false;}
+            
+            //On regarde si le block existe
+            $pos = strpos($this->CurrentBlock, '/'.$name.'/');
+            
+            //On prend l'adresse jusqu'au block voulu
+            $current = substr($this->CurrentBlock, 0, $pos);
+        }
+        else //On prend le block courant
+        {
+            //Triche pour passer la vérification en dessous
+            $pos = 1;
+            
+            //On prend le block courant
+            $current = $this->CurrentBlock;
+            
+            //On ne connais pas son nom mais ce n'est pas grave, 
+            //il est utile que si on nous l'a indiqué
+            $name = '';
+        }
+        
+        //Si le block existe bien
+        if($pos === false)
+        {
+            $vars = &$TabVars;
+            return;
+        }
+        
+        //Utile pour le cas où on nous donne le nom du block.
+        //Permet de savoir si le block a été trouvé durant la lecture.
+        $find = false;
+        $exCurrent = explode('/', $current); //On découpe le chemin
+        
+        //On lit chaque morceau du chemin un par un
+        foreach($exCurrent as $val)
+        {
+            //Si le nom est vide.
+            if($val == '') {continue;}
+            
+            //On position $TabVars vers la référence du
+            //sous-tableau qu'on lit par rapport à la où on est
+            $TabVars = &$TabVars[$val];
+            
+            //Si le block qu'on cherchait à été trouvé à la lecture précédente on quitte le foreach
+            //Il est utile de le faire à la boucle après le nom du tableau 
+            //de façon à se positionner dans la 1er boucle.
+            if($find == true) {break;}
+            
+            //Si le block qu'on lit possède le même nom que celui qu'on recherche, 
+            //on indique l'avoir trouvé.
+            if($val == $name) {$find = true;}
+        }
+        
+        //Puis on place $TabVars vers la référence du sous-array 'vars' par rapport à la où on est.
+        $vars = &$TabVars['vars'];
     }
     
     /**
@@ -323,71 +383,31 @@ class Template implements \BFWTplInterface\ITemplate
     public function AddBlock($name, $vars = null, $end=null)
     {
         //Sécurité par rapport à des noms de block qui ne doivent pas être utilisé
-        if(in_array($name, $this->BanWords))
-        {
-            return false;
-        }
+        if(in_array($name, $this->BanWords)) {return false;}
         
-        $boucle = 0; //Par défaut on dit être dans la 1ere boucle du block
-        $Tab = &$this->Block; //On positionne $Tab vers la référence de $this->Block
+        //Initialise
         
-        if($this->CurrentBlock != '/') //On n'est pas dans le 1er block
+        //Par défaut on dit être dans la 1ere boucle du block
+        $boucle  = 0;
+        
+        //On positionne $Tab vers la référence de $this->Block
+        $Tab     = &$this->Block;
+        
+        //Initialise le curseur indiquant le block courant
+        $current = $current = $this->CurrentBlock.$name;
+        
+        //On n'est pas dans le 1er block
+        if($this->CurrentBlock != '/')
         {
-            $pos = strpos($this->CurrentBlock, '/'.$name.'/'); //On regarde si le block existe déjà
-            
-            //S'il existe déjà dans l'emplacement où on est dans l'arborescence, on ajoute une boucle dedans
-            if($pos !== false)
-            {
-                //On récupère le chemin direct vers l'array 'block' du block parent à celui voulu
-                $current = substr($this->CurrentBlock, 0, $pos);
-                $exCurrent = explode('/', $current); //On découpe le chemin
-                
-                //On positionne $Tab vers une référence vers le sous-array que l'on souhaite
-                foreach($exCurrent as $val)
-                {
-                    if($val != '')
-                    {
-                        $Tab = &$Tab[$val];
-                    }
-                }
-                
-                $current .= '/'.$name; //On y ajoute le nom de notre block dans le chemin
-                
-                //On compte le nombre d'élément contient l'array de notre block
-                //afin de connaitre le numéro de boucle suivant.
-                $boucle = count($Tab[$name]);
-            }
-            else //Sinon c'est que c'est un nouveau block. On doit le créer dans l'arborescence
-            {
-                //On positionne le chemin vers le sous block 'block' du block courrant
-                $current = $this->CurrentBlock.'/block';
-                $exCurrent = explode('/', $current); //On découpe le chemin
-                
-                //On positionne $Tab vers une référence vers le sous-array que l'on souhaite
-                foreach($exCurrent as $val)
-                {
-                    if($val != '')
-                    {
-                        $Tab = &$Tab[$val];
-                    }
-                }
-                
-                $current .= '/'.$name; //On y ajoute le nom de notre block dans le chemin
-                
-                if(isset($Tab[$name][$boucle])) //Le block existe déjà, on cherche la dernière boucle
-                {
-                    $boucle = count($Tab[$name]);
-                }
-            }
+            positionneToBlock($name, $current, $boucle, $Tab);
         }
         else //On est à la racine
         {
-            if(isset($Tab[$name][$boucle])) //Le block existe déjà, on cherche la dernière boucle
+            //Le block existe déjà, on cherche la dernière boucle
+            if(isset($Tab[$name][$boucle]))
             {
                 $boucle = count($Tab[$name]);
             }
-            
-            $current = $this->CurrentBlock.$name; //on ajoute juste le nom
         }
         
         //On ajoute l'arborescence d'un block à $Tab dans le sous-Array correspondant à notre block
@@ -399,496 +419,111 @@ class Template implements \BFWTplInterface\ITemplate
         
         //On met à jour $this->CurrentBlock avec le block qu'on vient de créer et sa boucle.
         $this->CurrentBlock = $current.'/'.$boucle;
-        if(is_array($vars)) //Si des variable on été passé, on envoi ça à $this->AddVars()
-        {
-            $this->AddVars($vars, true);
-        }
         
-        if($end != null)
+        //Si des variable on été passé, on envoi ça à $this->AddVars()
+        if(is_array($vars)) {$this->AddVars($vars, true);}
+        
+        //S'il faut remonter dans les blocs
+        if(!is_null($end))
         {
-            for($i=0;$i<$end;$i++)
-            {
-                $this->remonte();
-            }
+            //On remonte de n block
+            for($i=0; $i<$end; $i++) {$this->remonte();}
         }
         
         return true; //Tout est ok.
     }
     
     /**
+     * Permet de positionner le curseur sur le block voulu
+     * 
+     * @param string $name     Le nom du block
+     * @param string &$current L'emplacement courant du block dans la structure
+     * @param int    &$boucle  Le nombre de boucle du block
+     * @param array  &$Tab     Le tableau du block lu
+     * 
+     * @return void
+     */
+    protected function positionneToBlock($name, &$current, &$boucle, &$Tab)
+    {
+        $pos = strpos($this->CurrentBlock, '/'.$name.'/'); //On regarde si le block existe déjà
+        
+        //On découpe le chemin
+        $exCurrent = explode('/', $current);
+        
+        //S'il existe déjà dans l'emplacement où on est dans l'arborescence, on ajoute une boucle dedans
+        if($pos !== false)
+        {
+            //On récupère le chemin direct vers l'array 'block' du block parent à celui voulu
+            $current = substr($this->CurrentBlock, 0, $pos);
+        }
+        //Sinon c'est que c'est un nouveau block. On doit le créer dans l'arborescence
+        else
+        {
+            //On positionne le chemin vers le sous block 'block' du block courrant
+            $current = $this->CurrentBlock.'/block';
+        }
+        
+        //On y ajoute le nom de notre block dans le chemin
+        $current .= '/'.$name;
+        
+        //On positionne $Tab vers une référence vers le sous-array que l'on souhaite
+        foreach($exCurrent as $val)
+        {
+            if($val != '') {$Tab = &$Tab[$val];}
+        }
+        
+        //On compte le nombre d'élément contient l'array de notre block
+        //afin de connaitre le numéro de boucle suivant.
+        $boucle = count($Tab[$name]);
+    }
+    
+    /**
      * Indique la fin du fichier template.
      * Une fois appelé, le script parse le fichier template.
      * 
-     * @param bool $no_echo (default: false) Indique s'il faut afficher le résultat par echo (défault) ou le renvoyer en sortie de fonction
+     * @param integer $no_echo (default: 0) Indique s'il faut afficher le résultat par echo (défault) ou le renvoyer en sortie de fonction
      * 
      * @return string Retourne le résultat du parsage si $no_echo=1
      */
     public function End($no_echo=0)
     {
         $this->CurrentBlock = '/'; //On place le chemin à la racine
-        $this->readFile(); //on lit le fichier et traite le fichier tpl donné
         
-        if($no_echo == 0) //On affiche le résultat via un simple echo.
-        {
-            echo $this->TamponFinal;
-            return '';
-        }
-        else
-        {
-            return $this->TamponFinal;
-        }
+        $parse = new Parse($this);
+        return $parse->run($no_echo);
     }
     
     /**
-     * Lit le fichier template contenant l'html et le traite
-     */
-    protected function readFile()
-    {
-        //** Utilisé lorsque la lecture rencontre un block
-            //Le contenu du fichier html est mit de dedans lorsqu'un 1er block est rencontrer jusqu'à sa fermeture
-            $tamponBlock = '';
-            
-            $nameBlockFind = ''; //Le nom du block trouvé
-            $nameBlockRoot = '/'; //Le chemin racine (utile quand on est dans un sous block)
-            $nbOpenBlock = 0; //Le nombre de block rencontré (permet de trouvé le block fermant voulu)
-        
-        //**Lecture du fichier
-        $fop = fopen($this->FileLink, 'r'); //Ouverture du fichier en lecture seul
-        while($line = fgets($fop)) //Analise ligne par ligne
-        {
-            $this->analize($line, $tamponBlock, $nameBlockFind, $nbOpenBlock, $nameBlockRoot);
-        }
-        fclose($fop); //Fermeture du fichier
-    }
-    
-    /**
-     * Analise une ligne (d'un fichier) afin d'y trouvé les blocks ouvrant/fermant 
-     * et stock en variable le contenu si on est dans un block
+     * Retourne les variables global ou pour un block en particulier
      * 
-     * @param string $line          La ligne à lire
-     * @param string $TamponBlock   (ref) La variable tampon pour le stockage de la ligne lorsqu'un block est rencontré
-     * @param string $nameBlockFind (ref) Le nom du block trouvé
-     * @param int    $nbOpenBlock   (ref) Le nombre de block ouvert
-     * @param string $nameBlockRoot Le chemin actuel dans l'arborescence des blocks
-     */
-    protected function analize($line, &$TamponBlock, &$nameBlockFind, &$nbOpenBlock, $nameBlockRoot)
-    {
-        //Si une balise block ouvrante a été trouvé
-        if($this->chercheOpenBlock($line, $nbOpenBlock) && $nbOpenBlock == 1)
-        {
-            $nameBlockFind = $this->recherche_NameBlock($line); //On récupère le nom du block
-            
-            //Gestion des <block name="a">blablabla</block>
-            //Si une balise block fermante est trouvé sur la même ligne que l'ouvrante
-            if($this->chercheFinBlock($line, $nbOpenBlock))
-            {
-                //On enlève les balises block de la ligne
-                $cont = preg_replace('#<block name="'.self::REGEX.'">(.+)</block>#', '$2', $line);
-                $this->traitementBlock($nameBlockRoot, $nameBlockFind, $cont); //on envoi au traitement
-                
-                //On vide certaines variables
-                $nameBlockFind = ''; 
-                $TamponBlock = '';
-            }
-        }
-        else //Pas de block ouvrant
-        {
-            //Si on est dans un block (si oui la variable où est stocké son nom n'est pas vide)
-            if($nameBlockFind != '')
-            {
-                //S'il s'agit de la fin de notre block
-                if($this->chercheFinBlock($line, $nbOpenBlock))
-                {
-                    //On envoi au traitement
-                    $this->traitementBlock($nameBlockRoot, $nameBlockFind, $TamponBlock);
-                    
-                    //On vide certaines variables
-                    $nameBlockFind = '';
-                    $TamponBlock = '';
-                }
-                //Sinon, on ajoute au block. On enlève le saut de ligne puis on le remet 
-                //pour le cas où il était pas présent et donc éviter de l'avoir en double
-                else
-                {
-                    $TamponBlock .= rtrim($line, PHP_EOL).PHP_EOL;
-                }
-            }
-            //On est pas dans un block, on remplace les variables, on recherche les vues et 
-            //on ajoute la ligne au tampon final qui sera affiché
-            else
-            {
-                $this->TamponFinal .= $this->remplace_view($this->remplaceVars($line, $nameBlockRoot));
-            }
-        }
-    }
-    
-    /**
-     * Traite le contenu des blocks pour l'envoyer à l'analise
-     * 
-     * @param string $nameBlockRoot Le chemin actuel dans l'arborescence des blocks
-     * @param string $nameBlockFind Le nom du block trouvé
-     * @param string $contBlock     Le contenu du block
-     */
-    protected function traitementBlock($nameBlockRoot, $nameBlockFind, $contBlock)
-    {
-        $nameBlockRootTMP = $nameBlockRoot; //On garde le contenu de côté
-        $tamponBlock = ''; //Le tampon qui servira si un sous block est rencontré
-        
-        if(in_array($nameBlockFind, $this->BanWords)) //Si le nom du block n'est pas autorisé. On stop le traitement.
-        {
-            return false;
-        }
-        
-        if($nameBlockRoot != '/') //Si on est pas à la racine, on ajoute 'block' dans le chemin
-        {
-            $nameBlockRoot .= '/block/';
-        }
-        
-        $nameBlockRoot .= $nameBlockFind; //On et on ajoute le nom de notre block au chemin
-        $nameBlockFind = ''; //On vide la variable contenant le nom de notre block
-        $nbOpenBlock = 0; //Mise à 0 du nombre de block trouvé
-        
-        $Tab = &$this->Block; //On positionne $Tab vers la référence de $this->Block
-        $exCurrent = explode('/', $nameBlockRoot); //On découpe le chemin
-        
-        //Permet d'indiquer qu'il y a un eu un block non-existant durant la lecture.
-        //(utile dans le cas de block pour des conditions)
-        $stop = false;
-        
-        foreach($exCurrent as $val) //On lit chaque morceau du chemin un par un
-        {
-            if($val != '') //Si le nom n'est pas vide.
-            {
-                if(!array_key_exists($val, $Tab)) //On vérifie qu'il existe bien. Si ce n'est pas le cas ...
-                {
-                    $stop = true; //... On l'indique sur la variable...
-                    break; //... Et on sort du foreach
-                }
-                
-                //On position $TabVars vers la référence du sous-tableau qu'on lit par rapport à la où on est
-                $Tab = &$Tab[$val];
-            }
-        }
-        
-        if($stop == false) //Si le block trouvé existe bien dans l'arborescence
-        {
-            //Permet de traiter le même contenu pour chaque boucle prévu par l'arborescence.
-            foreach($Tab as $boucle => $infosBlock)
-            {
-                $nameBlockBoucle = $nameBlockRoot.'/'.$boucle; //On positionne le chemin sur la boucle
-                
-                //On créer un array. La découpe ce fait sur chaque fin de de ligne.
-                $exEOL = explode(PHP_EOL, $contBlock);
-                
-                //Pour chaque ligne, on envoi à l'analize.
-                foreach($exEOL as $line)
-                {
-                    $this->analize($line, $tamponBlock, $nameBlockFind, $nbOpenBlock, $nameBlockBoucle);
-                }
-            }
-        }
-        //Il n'existais pas dans l'arborescence, donc on affiche pas.
-        //On remet la valeur de la variable à sa valeur d'origine
-        else
-        {
-            $nameBlockRoot = $nameBlockRootTMP;
-        }
-    }
-    
-    /**
-     * Permet de remplacer la balise <var /> par sa valeur
-     * 
-     * @param string      $line      La ligne sur laquel on doit agir
      * @param string|bool $nameBlock Le chemin dans l'arborescence où on se trouve
      * 
-     * @return string La nouvelle ligne avec les balise var remplacé.
+     * @return array
      */
-    protected function remplaceVars($line, $nameBlock)
+    public function getVars($nameBlock=false)
     {
-        //On cherche la position de la 1ere balise <var afin de savoir s'il y en a dans la ligne.
-        $posDouble = strpos($line, '<var name="');
-        $posSimple = strpos($line, "<var name='");
+        //On initialise $TabVars avec $this->Root_Variable
+        $Tab = $this->Root_Variable;
         
-        if($posDouble !== false || $posSimple !== false) //Si au moins 1 balise a été trouvé
+        //Si on est dans un block.
+        if(is_string($nameBlock) && $nameBlock != '/')
         {
-            if($nameBlock != '/' && $nameBlock != false) //Si on est dans un block.
+            //On positionne $Tab vers la référence de $this->Block
+            $Tab = &$this->Block;
+            
+            //On découpe le chemin
+            $exCurrent = explode('/', $nameBlock);
+            
+            //On positionne $Tab vers une référence vers le sous-array que l'on souhaite
+            foreach($exCurrent as $val)
             {
-                $Tab = &$this->Block; //On positionne $Tab vers la référence de $this->Block
-                $exCurrent = explode('/', $nameBlock); //On découpe le chemin
-                
-                //On positionne $Tab vers une référence vers le sous-array que l'on souhaite
-                foreach($exCurrent as $val)
-                {
-                    if($val != '')
-                    {
-                        $Tab = &$Tab[$val];
-                    }
-                }
-                
-                //Puis on place $TabVars vers la référence du sous-array 'vars' par rapport à la où on est.
-                $Tab = &$Tab['vars'];
-            }
-            else //On n'est pas dans un block, $TabVars prend la référence de $this->Root_Variable
-            {
-                $Tab = $this->Root_Variable;
+                if($val != '') {$Tab = &$Tab[$val];}
             }
             
-            do
-            {
-                $nameVar = array(); //Déclaration de variable à array vide.
-
-                //On recherche dans la ligne la 1ere balise <var name"" />.
-                //Le contenu de name est mis dans $nameVar[1]
-                //Si la balise a été trouvé, $search vaux true, sinon false.
-                $search_double = preg_match('#<var name="'.self::REGEX.'" />#', $line, $nameVar);
-                $search_simple = false;
-                
-                //Si une balise a été trouve. On remplace la balise par son contenu. 
-                //On le fait que pour une seul balise à la fois
-                if($search_double)
-                {
-                    if(isset($Tab[$nameVar[1]]))
-                    {
-                        $line = preg_replace('#<var name="'.self::REGEX.'" />#', $Tab[$nameVar[1]], $line, 1);
-                    }
-                    else
-                    {
-                        if(isset($this->Gen_Variable[$nameVar[1]]))
-                        {
-                            $line = preg_replace(
-                                            '#<var name="'.self::REGEX.'" />#', 
-                                            $this->Gen_Variable[$nameVar[1]], 
-                                            $line, 
-                                            1
-                            );
-                        }
-                        else
-                        {
-                            echo 'Template Erreur : Variable '.$nameVar[1].' inconnue.<br/>';
-                            exit;
-                        }
-                    }
-                }
-                else
-                {
-                    $search_simple = preg_match("#<var name=\'".self::REGEX."\' />#", $line, $nameVar);
-                    if($search_simple)
-                    {
-                        if(isset($Tab[$nameVar[1]]))
-                        {
-                            $line = preg_replace("#<var name='".self::REGEX."' />#", $Tab[$nameVar[1]], $line, 1);
-                        }
-                        else
-                        {
-                            if(isset($this->Gen_Variable[$nameVar[1]]))
-                            {
-                                $line = preg_replace(
-                                                "#<var name='".self::REGEX."' />#", 
-                                                $this->Gen_Variable[$nameVar[1]],
-                                                $line,
-                                                1
-                                );
-                            }
-                            else
-                            {
-                                echo 'Template Erreur : Variable '.$nameVar[1].' inconnue.<br/>';
-                                exit;
-                            }
-                        }
-                    }
-                }
-                
-                if($search_simple || $search_double)
-                {
-                    $search = true;
-                }
-                else
-                {
-                    $search = false;
-                }
-            }
-            while($search); //On répete tant qu'il reste des balises <var /> dans la ligne
-        }
-
-        $posVarUri = strpos($line, '<varUri');
-        if($posVarUri !== false)
-        {
-            global $base_url;
-            
-            $search = false;
-            do
-            {
-                $nameVar = array(); //Déclaration de variable à array vide.
-                
-                //On recherche dans la ligne la 1ere balise <var name"" />.
-                //Le contenu de name est mis dans $nameVar[1]
-                //Si la balise a été trouvé, $search vaux true, sinon false.
-                $search_uri1 = preg_match('#<varUri />#', $line, $nameVar);
-                
-                if($search_uri1)
-                {
-                    $line = preg_replace('#<varUri />#', $base_url, $line, 1);
-                }
-                else
-                {
-                    $search_uri2 = preg_match('#<varUri/>#', $line, $nameVar);
-                    if($search_uri2)
-                    {
-                        $line = preg_replace('#<varUri/>#', $base_url, $line, 1);
-                    }
-                }
-            }
-            while($search);
+            //Puis on place $TabVars vers la référence du sous-array 'vars' par rapport à la où on est.
+            $Tab = &$Tab['vars'];
         }
         
-        return $line; //Puis on retourne la ligne avec les balises <var /> remplacé par leurs valeurs respectives
-    }
-    
-    /**
-     * Permet de savoir si un block est présent dans la ligne et si oui, son nom.
-     * 
-     * @param string $line La ligne où l'on doit chercher
-     * 
-     * @return null|string Le nom du block s'il y en a un de présent. Sinon renvoi null
-     */
-    protected function recherche_NameBlock($line)
-    {
-        $pos = strpos($line, '<block name="'); //On recherche s'il y a une balise block ouvrante
-        
-        if($pos !== false) //Si c'est le cas
-        {
-            preg_match('#<block name="'.self::REGEX.'">#', $line, $nameBlock); //On récupère le nom dans $nameBlock[1]
-            return $nameBlock[1]; //On retourne le nom du block
-        }
-        else //Sinon on renvoi null
-        {
-            return null;
-        }
-    }
-    
-    /**
-     * Permet de savoir s'il y a une balise block ouvrante dans la ligne et met à jour le nombre de block trouvé
-     * 
-     * @param string $line   La ligne dans laquelle on doit chercher
-     * @param int    $nbOpen (ref) Le nombre de block ouvert trouvé
-     * 
-     * @return bool True si une balise block ouvrante est trouvé. False sinon
-     */
-    protected function chercheOpenBlock($line, &$nbOpen)
-    {
-        $pos = strpos($line, '<block name="'); //On recherche s'il y a une balise block ouvrante
-        
-        if($pos !== false) //Si c'est le cas
-        {
-            $nbOpen += 1; //Incrémentation du nombre de balise block trouvé
-            return true; //Retourne true
-        }
-        else //Sinon retourne false
-        {
-            return false;
-        }
-    }
-    
-    /**
-     * Permet de savoir si on est sur la dernière balise block fermante dans la ligne
-     * Et met à jour le nombre de block trouvé pour chaque balise block fermante trouvée.
-     * 
-     * @param string $line   La ligne dans laquelle on doit chercher
-     * @param int    $nbOpen (ref) Le nombre de block ouvert trouvé
-     * 
-     * @return bool True si la dernière balise block fermante est trouvé. False sinon
-     */
-    protected function chercheFinBlock($line, &$nbOpen)
-    {
-        $pos = strpos($line, '</block>'); //On recherche s'il y a une balise block fermante
-            
-        if($pos !== false) //Si c'est le cas
-        {
-            $nbOpen -= 1; //Décrémentation du nombre de balise block trouvé
-            if($nbOpen == 0) //Si on est à la dernière balise block, on retourne true
-            {
-                return true;
-            }
-            else //Sinon false
-            {
-                return false;
-            }
-        }
-        else //Pas de balise block fermante, on retourne false.
-        {
-            return false;
-        }
-    }
-    
-    /**
-     * Recherche et remplace les block <view> par leurs équivalents
-     * 
-     * @param string $line la ligne dans laquelle on doit chercher
-     * 
-     * @return string Le résultat après traitement de la vue
-     */
-    protected function remplace_view($line)
-    {
-        //Recherche
-        $pos = strpos($line, '<view dir="');
-        
-        if($pos !== false)
-        {
-            $search  = '#<view '.self::REGEXATTR.'="'.self::REGEX.'" ';
-            $search .= self::REGEXATTR.'="'.self::REGEX.'" ';
-            $search .= self::REGEXATTR.'="'.self::REGEXJSON.'" (';
-            $search .= self::REGEXATTR.'="'.self::REGEX.'") />#';
-            
-            //Récupération des infos
-            $Var = array();
-            $match = preg_match($search, $line, $Var);
-            
-            foreach($Var as $key => $val)
-            {
-                $key2 = $key + 1;
-                if($key < 6 && $key > 0)
-                {
-                    if($key%2 == 1)
-                    {
-                        ${$val} = $Var[$key2];
-                    }
-                }
-            }
-            
-            $opt .= $Var[7].$Var[8];
-            if(isset($Var[9]))
-            {
-                $mods = $Var[11];
-            }
-            else
-            {
-                $mods = false;
-            }
-            
-            //Remplacement
-            $line = preg_replace($search, '', $line);
-            
-            //Inclusion de la vue
-            global $path;
-            $link = $path;
-            
-            if($mods != 'false')
-            {
-                $link = '../modules/';
-                if($mods != 'true')
-                {
-                    $link .= $mods.'/';
-                }
-            }
-            
-            $link .= $dir.'/'.$file.'.php';
-            require_once($link);
-            
-            return $TamponFinal;
-        }
-        else
-        {
-            return $line;
-        }
+        return $Tab;
     }
 }
